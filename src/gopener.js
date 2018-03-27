@@ -187,5 +187,3 @@ class Opener {
     return this.isFullyClosed;
   }
 }
-
-const opener = new Opener(2,3,4);
