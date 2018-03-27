@@ -46,7 +46,7 @@ An example would be a file payload.json
       "intent": "OPEN"
     }
 
-Followed by this command: `curl -kd @payload.json https://<raspberrypi.ip>:4443/api/`
+Followed by this command: `curl -kd @payload.json -H "Content-Type: application/json" https://<raspberrypi.ip>:4443/api/`
 
 This should be followed by a response of "Opening garage" and the actual opening of your garage if it is closed or nothing if it is already open.
 

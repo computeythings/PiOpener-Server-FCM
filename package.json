@@ -9,6 +9,8 @@
   "author": "computeythings",
   "license": "ISC",
   "dependencies": {
+    "body-parser": "^1.18.2",
+    "express": "^4.16.3",
     "pigpio": "^0.7.0",
     "sleep": "^5.1.1"
   }
