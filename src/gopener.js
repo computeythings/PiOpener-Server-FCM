@@ -5,7 +5,7 @@ const sleep = require('sleep');
 const OPEN = 'OPEN';
 const CLOSED = 'CLOSED';
 
-class Opener {
+module.exports = class Opener {
   constructor(openPin, closedPin, relayPin) {
     // socketClients will be alerted on state changes
     this.socketClients = [];
@@ -26,6 +26,7 @@ class Opener {
       }
     );
     this.relayPin = new GPIO(relayPin, {mode: GPIO.OUTPUT});
+    this.relayPin.digitalWrite(1);
 
     this.lastTriggered = 0; // Debounce variable
     this.openPin.on('interrupt', (level) => {
@@ -75,7 +76,10 @@ class Opener {
 
     /* Quickly toggle a relay closed and open to simulate a button press */
     this.toggle = function() {
-      this.relayPin.trigger(200000, 0);
+      this.relayPin.digitalWrite(0);
+      setTimeout(() => {
+        this.relayPin.digitalWrite(1);
+      }, 200);
     }
 
     this.toggleGarage = function() {
@@ -102,7 +106,7 @@ class Opener {
     this.closeGarage = function() {
       console.log('Closing garage');
       if (!this.isFullyClosed) {
-        this.want = CLOSE;
+        this.want = CLOSED;
         this.toggle();
         this.updateClient();
       } else
