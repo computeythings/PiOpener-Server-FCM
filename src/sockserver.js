@@ -19,6 +19,7 @@ module.exports = class TCPServer {
       this.key = fs.readFileSync(key);
       this.logf = logf;
 
+      // Socket listener for each connection established.
       this.listener = function(socket) {
         console.log('client accepted at address ' + socket.remoteAddress);
         // Clients are able to send data over the socketet to control this.opener
@@ -54,11 +55,13 @@ module.exports = class TCPServer {
         });
       }
 
+      // Only run over SSL if both cert and key exist
       if(this.cert && this.key) {
-        console.log('starting SSL socketet server');
+        console.log('starting encryted TCP server');
         this.credentials = {key: this.key, cert: this.cert};
         this.server = tls.createServer(this.credentials, this.listener);
       } else {
+        console.log('starting unencrypted TCP server');
         this.server = tls.createServer(this.listener);
       }
 
@@ -67,10 +70,6 @@ module.exports = class TCPServer {
   start() {
     this.server.listen(this.port||DEFAULT_PORT, () => {
       console.log('TCP server started on port: ' + this.port||DEFAULT_PORT);
-    });
-    this.server.on('connection', (conn) => {
-        console.log('client accepted at address: ' + conn.remoteAddress + ':' +
-                      conn.remotePort);
     });
   }
 }
