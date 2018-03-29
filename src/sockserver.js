@@ -2,8 +2,8 @@
 const tls = require('tls');
 const fs = require('fs');
 
-const DEFAULT_PORT = 4443; // Default listening port
-// Potential command values received from clients
+const DEFAULT_PORT = 4443; // default listening port
+// potential command values received from clients
 const KILL_COMMAND = 'KILL';
 const REFRESH_COMMAND = 'REFRESH';
 const OPEN_COMMAND = 'OPEN_GARAGE';
@@ -12,52 +12,68 @@ const TOGGLE_COMMAND = 'TOGGLE_GARAGE';
 
 module.exports = class TCPServer {
   constructor(opener, port, apikey, cert, key, logf) {
-      this.opener = opener;
       this.port = port;
-      this.apikey = apikey;
       this.cert = fs.readFileSync(cert);
       this.key = fs.readFileSync(key);
       this.logf = logf;
+      const clients = {};
 
-      // Socket listener for each connection established.
+      // socket listener for each connection established.
       this.listener = function(socket) {
         console.log('client accepted at address ' + socket.remoteAddress);
-        // Clients are able to send data over the socketet to control this.opener
+        clients[socket] = false; // add socket to clients list
+        // clients are able to send data over the socketet to control this.opener
         socket.on('data', (data) => {
-          // Process data sent by client
-          switch(data) {
-            case KILL_COMMAND: // Kill the connection
-              console.log('socketet close requested');
+          var stringData = data.toString().trim();
+          if(!clients[socket]) { // verify socket before reading data
+            if(stringData === apikey) {
+              // set verified once apikey is received
+              clients[socket] = true;
+            } else {
+              socket.write('Invalid API Key.');
+            }
+            return;
+          }
+
+          // process data sent by client
+          switch(stringData) {
+            case KILL_COMMAND: // kill the connection
+              console.log('socket close requested');
               socket.end();
               break;
-            case REFRESH_COMMAND: // Client requests updated opener status
+            case REFRESH_COMMAND: // client requests updated opener status
               console.log('Client refresh');
-              this.opener.updateClient();
+              opener.updateClient();
               break;
-            case OPEN_COMMAND: // Client requests to open opener
+            case OPEN_COMMAND: // client requests to open opener
               console.log('Opening garage');
-              this.opener.openGarage();
+              opener.openGarage();
               break;
-            case CLOSE_COMMAND: // Client requests to close opener
+            case CLOSE_COMMAND: // client requests to close opener
               console.log('Closing garage');
-              this.opener.closeGarage();
+              opener.closeGarage();
               break;
-            case TOGGLE_COMMAND: //Client requests to toggle opener
+            case TOGGLE_COMMAND: // client requests to toggle opener
               console.log('Toggling garage');
-              this.opener.toggleGarage();
+              opener.toggleGarage();
               break;
             default:
-              console.log('Client sent: ' + data);
+              console.log('Client sent: ' + stringData);
           }
         });
         socket.on('close', (data) => {
-          console.log('TCP server closed');
+          console.log('TCP connection with '+ socket.remoteAddress +' closed');
+          delete clients[socket]; // remove socket as client
+        });
+        socket.on('error', (err) => {
+          console.log('Error over connection to ' + socket.remoteAddress +
+                        ':\n' + err);
         });
       }
 
-      // Only run over SSL if both cert and key exist
+      // only run over SSL if both cert and key exist
       if(this.cert && this.key) {
-        console.log('starting encryted TCP server');
+        console.log('starting encrypted TCP server');
         this.credentials = {key: this.key, cert: this.cert};
         this.server = tls.createServer(this.credentials, this.listener);
       } else {
