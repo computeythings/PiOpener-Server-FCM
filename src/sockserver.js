@@ -30,6 +30,7 @@ module.exports = class TCPServer {
               clients[socket] = true;
             } else {
               socket.write('Invalid API Key.');
+              socket.end();
             }
             return;
           }
@@ -41,19 +42,15 @@ module.exports = class TCPServer {
               socket.end();
               break;
             case REFRESH_COMMAND: // client requests updated opener status
-              console.log('Client refresh');
               opener.updateClient();
               break;
             case OPEN_COMMAND: // client requests to open opener
-              console.log('Opening garage');
               opener.openGarage();
               break;
             case CLOSE_COMMAND: // client requests to close opener
-              console.log('Closing garage');
               opener.closeGarage();
               break;
             case TOGGLE_COMMAND: // client requests to toggle opener
-              console.log('Toggling garage');
               opener.toggleGarage();
               break;
             default:
@@ -65,7 +62,7 @@ module.exports = class TCPServer {
           delete clients[socket]; // remove socket as client
         });
         socket.on('error', (err) => {
-          console.log('Error over connection to ' + socket.remoteAddress +
+          console.error('Error over connection to ' + socket.remoteAddress +
                         ':\n' + err);
         });
       }
