@@ -15,19 +15,18 @@ module.exports = class TCPServer {
       this.port = port;
       this.cert = fs.readFileSync(cert);
       this.key = fs.readFileSync(key);
-      const clients = {};
 
       // socket listener for each connection established.
       this.listener = function(socket) {
         console.log('client accepted at address ' + socket.remoteAddress);
-        clients[socket] = false; // add socket to clients list
+        this.verified = false; // client requires verifiaction
         // clients are able to send data over the socketet to control this.opener
         socket.on('data', (data) => {
           var stringData = data.toString().trim();
-          if(!clients[socket]) { // verify socket before reading data
+          if(!this.verified) { // verify socket before reading data
             if(stringData === apikey) {
               // set verified once apikey is received
-              clients[socket] = true;
+              this.verified = true;
             } else {
               socket.write('Invalid API Key.');
               socket.end();
@@ -59,7 +58,6 @@ module.exports = class TCPServer {
         });
         socket.on('close', (data) => {
           console.log('TCP connection with '+ socket.remoteAddress +' closed');
-          delete clients[socket]; // remove socket as client
         });
         socket.on('error', (err) => {
           console.error('Error over connection to ' + socket.remoteAddress +
