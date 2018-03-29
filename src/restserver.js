@@ -78,5 +78,14 @@ module.exports = class RESTServer {
   start() {
     // Listen on a specified port or 4443 by default
     this.server.listen(this.port || DEFAULT_PORT);
+    this.server.on('error', (err) => {
+      if(err.code === 'EADDRINUSE') {
+          console.warn('Address already in use, retrying...');
+          setTimeout(() => {
+            server.close();
+            server.listen(this.port || DEFAULT_PORT);
+          }, 1000);
+      }
+    });
   }
 }

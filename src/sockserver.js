@@ -81,5 +81,14 @@ module.exports = class TCPServer {
     this.server.listen(this.port||DEFAULT_PORT, () => {
       console.log('TCP server started on port: ' + this.port||DEFAULT_PORT);
     });
+    this.server.on('error', (err) => {
+      if(err.code === 'EADDRINUSE') {
+          console.warn('Address already in use, retrying...');
+          setTimeout(() => {
+            server.close();
+            server.listen(this.port || DEFAULT_PORT);
+          }, 1000);
+      }
+    });
   }
 }
