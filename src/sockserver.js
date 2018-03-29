@@ -11,11 +11,10 @@ const CLOSE_COMMAND = 'CLOSE_GARAGE';
 const TOGGLE_COMMAND = 'TOGGLE_GARAGE';
 
 module.exports = class TCPServer {
-  constructor(opener, port, apikey, cert, key, logf) {
+  constructor(opener, port, apikey, cert, key) {
       this.port = port;
       this.cert = fs.readFileSync(cert);
       this.key = fs.readFileSync(key);
-      this.logf = logf;
       const clients = {};
 
       // socket listener for each connection established.

@@ -12,13 +12,12 @@ const TOGGLE_INTENT = 'TOGGLE';
 const QUERY_INTENT = 'QUERY';
 
 module.exports = class RESTServer {
-  constructor(opener, port, apikey, cert, key, logf) {
+  constructor(opener, port, apikey, cert, key) {
       this.opener = opener;
       this.port = port;
       this.apikey = apikey;
       this.cert = fs.readFileSync(cert);
       this.key = fs.readFileSync(key);
-      this.logf = logf;
 
       const app = express();
       app.use(bodyParser.urlencoded({
