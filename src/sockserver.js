@@ -42,7 +42,7 @@ module.exports = class TCPServer {
               socket.end();
               break;
             case REFRESH_COMMAND: // client requests updated opener status
-              opener.updateClient();
+              opener.updateServer();
               break;
             case OPEN_COMMAND: // client requests to open opener
               opener.openGarage();

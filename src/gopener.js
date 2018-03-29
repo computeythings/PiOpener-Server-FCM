@@ -7,8 +7,6 @@ const CLOSED = 'CLOSED';
 
 module.exports = class Opener {
   constructor(openPin, closedPin, relayPin) {
-    // socketClients will be alerted on state changes
-    this.socketClients = [];
     // Setup GPIO pins
     this.openPin = new GPIO(openPin,
       {
@@ -98,7 +96,7 @@ module.exports = class Opener {
       if (!this.isFullyOpen) {
         this.want = OPEN;
         this.toggle();
-        this.updateClient();
+        this.updateServer();
       } else
         console.log('Garage is already open.');
     }
@@ -108,7 +106,7 @@ module.exports = class Opener {
       if (!this.isFullyClosed) {
         this.want = CLOSED;
         this.toggle();
-        this.updateClient();
+        this.updateServer();
       } else
         console.log('Garage is already closed.');
     }
@@ -122,7 +120,7 @@ module.exports = class Opener {
         this.closeGarage();
       else
         this.want = 'NONE';
-      this.updateClient();
+      this.updateServer();
     }
 
     /* This is run when the closedPin switch is disconnected */
@@ -130,7 +128,7 @@ module.exports = class Opener {
       console.log('Garage is no longer open.');
       this.isClosing = true;
       this.isFullyOpen = false;
-      this.updateClient();
+      this.updateServer();
     }
 
     /* This is run when the closedPin switch is connected */
@@ -142,7 +140,7 @@ module.exports = class Opener {
         this.openGarage();
       else
         this.want = 'NONE';
-      this.updateClient();
+      this.updateServer();
     }
 
     /* This is run when the openPin switch is disconnected */
@@ -150,7 +148,7 @@ module.exports = class Opener {
       console.log('Garage is no longer closed.');
       this.isOpening = true;
       this.isFullyClosed = false;
-      this.updateClient();
+      this.updateServer();
     }
 
     /* Returns status info */
@@ -163,23 +161,25 @@ module.exports = class Opener {
       return data;
     }
 
-    /* Add a client to be updated on state changes */
-    this.addClient = function(client) {
-      this.socketClients.push(client);
-    }
-
-    /* Remove from client update list */
-    this.removeClient = function(client) {
-      this.socketClients.splice(socketClients.indexOf(client), 1);
+    /* Set a Firebase document to be updated on state changes */
+    this.setUpstream = function(doc) {
+      this.upstreamServerDoc = doc;
     }
 
     /*
-      This is run on any state change and will return data to a socket
-      client that has implemented an update callback method.
+      This is run on any state change and will send data to an upstream
+      Firebase server document.
     */
-    this.updateClient = function() {
-      this.socketClients.forEach((client) => {
-        element.update(this.status());
+    this.updateServer = function() {
+      if(!this.upstreamServerDoc)
+        return;
+
+      this.upstreamServerDoc.set(this.status())
+      .then(() => {
+        console.log('Successfully updated server');
+      })
+      .catch((err) => {
+        console.error('Error updating server: ', err)
       });
     }
   }
