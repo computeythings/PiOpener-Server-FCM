@@ -158,12 +158,14 @@ module.exports = class Opener {
       data.CLOSED = this.isFullyClosed;
       data.OPENING = this.isOpening;
       data.CLOSING = this.isClosing;
+      console.log('status:\n',data);
       return data;
     }
 
     /* Set a Firebase document to be updated on state changes */
     this.setUpstream = function(doc) {
       this.upstreamServerDoc = doc;
+      doc.set(this.status());
     }
 
     /*
@@ -175,9 +177,6 @@ module.exports = class Opener {
         return;
 
       this.upstreamServerDoc.set(this.status())
-      .then(() => {
-        console.log('Successfully updated server');
-      })
       .catch((err) => {
         console.error('Error updating server: ', err)
       });
