@@ -158,7 +158,6 @@ module.exports = class Opener {
       data.CLOSED = this.isFullyClosed;
       data.OPENING = this.isOpening;
       data.CLOSING = this.isClosing;
-      console.log('status:\n',data);
       return data;
     }
 
