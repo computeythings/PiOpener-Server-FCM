@@ -54,7 +54,6 @@ function initServers() {
   var opener = new Opener(config.OPEN_SWITCH_PIN, config.CLOSED_SWITCH_PIN,
                             config.RELAY_PIN);
   addServerTo(opener);
-  // TODO: Read cert locations and ports from cli arguments
   var certLocation = argv.cert || arg.c;
   var keyLocation = argv.key || arg.k;
   new RESTServer(opener, 4443, config.ACCESS_TOKEN, certLocation, keyLocation)
