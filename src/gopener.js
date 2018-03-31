@@ -4,6 +4,9 @@ const sleep = require('sleep');
 
 const OPEN = 'OPEN';
 const CLOSED = 'CLOSED';
+const OPENING = 'OPENING';
+const CLOSING = 'CLOSING';
+const NONE = 'NONE';
 
 module.exports = class Opener {
   constructor(openPin, closedPin, relayPin) {
@@ -42,11 +45,13 @@ module.exports = class Opener {
       }
     });
 
-    this.isFullyOpen = !this.openPin.digitalRead();
-    this.isFullyClosed = !this.closedPin.digitalRead();
-    this.isOpening = false;
-    this.isClosing = false;
-    this.want = 0; // Changed per user request
+    if (!this.openPin.digitalRead())
+      this.state = OPEN;
+    else if (!this.closedPin.digitalRead())
+      this.state = CLOSED;
+    else
+      this.state = NONE;
+    this.want = NONE; // Changed per user request
 
 
     this.openTrigger = function(level) {
@@ -81,9 +86,9 @@ module.exports = class Opener {
     }
 
     this.toggleGarage = function() {
-      if (this.isOpening || this.isFullyOpen)
+      if (this.state === OPEN || this.state === OPENING)
         this.closeGarage();
-      else if (this.isClosing || this.isFullyClosed)
+      else if (this.state === CLOSING || this.state === CLOSED)
         this.openGarage();
       else {
         console.log('Status unverifiable: toggling garage.')
@@ -93,7 +98,7 @@ module.exports = class Opener {
 
     this.openGarage = function() {
       console.log('Opening garage');
-      if (!this.isFullyOpen) {
+      if (this.state !== OPEN) {
         this.want = OPEN;
         this.toggle();
         this.updateServer();
@@ -103,7 +108,7 @@ module.exports = class Opener {
 
     this.closeGarage = function() {
       console.log('Closing garage');
-      if (!this.isFullyClosed) {
+      if (this.state !== CLOSED) {
         this.want = CLOSED;
         this.toggle();
         this.updateServer();
@@ -114,57 +119,48 @@ module.exports = class Opener {
     /* This is run when the openPin switch is connected */
     this.opened = function() {
       console.log('Garage is now open.');
-      this.isFullyOpen = true;
-      this.isOpening = false;
+      this.state = OPEN;
       if (this.want == CLOSED) // Toggle again if the intent was to close
         this.closeGarage();
       else
-        this.want = 'NONE';
+        this.want = NONE;
       this.updateServer();
     }
 
     /* This is run when the closedPin switch is disconnected */
     this.closing = function() {
       console.log('Garage is no longer open.');
-      this.isClosing = true;
-      this.isFullyOpen = false;
+      this.state = CLOSING;
       this.updateServer();
     }
 
     /* This is run when the closedPin switch is connected */
     this.closed = function() {
       console.log('Garage is now closed.');
-      this.isFullyClosed = true;
-      this.isClosing = false;
+      this.state = CLOSED;
       if (this.want == OPEN) // Toggle again if the intent was to open
         this.openGarage();
       else
-        this.want = 'NONE';
+        this.want = NONE;
       this.updateServer();
     }
 
     /* This is run when the openPin switch is disconnected */
     this.opening = function() {
       console.log('Garage is no longer closed.');
-      this.isOpening = true;
-      this.isFullyClosed = false;
+      this.state = OPENING;
       this.updateServer();
     }
 
     /* Returns status info */
     this.status = function() {
-      var data = {};
-      data.OPEN = this.isFullyOpen;
-      data.CLOSED = this.isFullyClosed;
-      data.OPENING = this.isOpening;
-      data.CLOSING = this.isClosing;
-      return data;
+      return {STATE: this.state};
     }
 
     /* Set a Firebase document to be updated on state changes */
     this.setUpstream = function(doc) {
       this.upstreamServerDoc = doc;
-      doc.set(this.status());
+      this.updateServer();
     }
 
     /*
@@ -175,7 +171,8 @@ module.exports = class Opener {
       if(!this.upstreamServerDoc)
         return;
 
-      this.upstreamServerDoc.set(this.status())
+      console.log('updating with ',this.status());
+      this.upstreamServerDoc.update(this.status())
       .catch((err) => {
         console.error('Error updating server: ', err)
       });
@@ -183,9 +180,9 @@ module.exports = class Opener {
   }
 
   get isOpen() {
-    return this.isFullyOpen;
+    return this.state === OPEN;
   }
   get isClosed() {
-    return this.isFullyClosed;
+    return this.state === CLOSED;
   }
 }

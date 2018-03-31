@@ -1,3 +1,4 @@
+const argv = require('minimist')(process.argv.slice(2));
 const TCPServer = require('./sockserver.js');
 const RESTServer = require('./restserver.js');
 const Opener = require('./gopener.js');
@@ -28,10 +29,7 @@ function addServerTo(opener) {
   }
 
   fireDB.collection('servers').add({
-    OPEN: false,
-    CLOSED: false,
-    OPENING: false,
-    CLOSING: false,
+    STATE: 'NONE',
     OWNER: firebase.auth().currentUser.uid
   })
   .then((doc) => {
