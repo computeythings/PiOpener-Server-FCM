@@ -11,8 +11,11 @@ const DOMAIN = '@gonnelladev-piopener-2e8f0.firebaseapp.com';
 const CONFIG = path.resolve(__dirname, 'config.json');
 const config = require(CONFIG);
 
+/*
+  Writes any changes to the config variable to the config file
+*/
 function updateConfig() {
-  var newConfig = JSON.stringify(config, null, 4);
+  var newConfig = JSON.stringify(config, null, 4); // args for readable spacing
   fs.writeFile(CONFIG, newConfig, "utf8", (err) => {
     if (err)
       console.error('ERROR: Failed to save doc id to config');
@@ -21,6 +24,10 @@ function updateConfig() {
   });
 }
 
+/*
+  Creates/Accesses a firestore document to save state to which clients will
+  subscribe to and be notified upon changes.
+*/
 function addServerTo(opener) {
   var fireDB = firebase.firestore();
   if(config.DOC_REF && config.DOC_REF !== '') {
@@ -28,6 +35,7 @@ function addServerTo(opener) {
     return;
   }
 
+  // if a doc ref doesn't exist, create a new one with this user as owner
   fireDB.collection('servers').add({
     STATE: 'NONE',
     OWNER: firebase.auth().currentUser.uid
@@ -51,18 +59,30 @@ function addServerTo(opener) {
   the Firebase server.
 */
 function initServers() {
+  // read pin values from config file
   var opener = new Opener(config.OPEN_SWITCH_PIN, config.CLOSED_SWITCH_PIN,
                             config.RELAY_PIN);
   addServerTo(opener);
-  var certLocation = argv.cert || arg.c;
-  var keyLocation = argv.key || arg.k;
-  new RESTServer(opener, 4443, config.ACCESS_TOKEN, certLocation, keyLocation)
-                  .start();
-  new TCPServer(opener, 4444, config.ACCESS_TOKEN, certLocation, keyLocation)
-                  .start();
-
+  // read cert and key form cli arguments
+  var certLocation = argv.cert || argv.c;
+  var keyLocation = argv.key || argv.k;
+  var webport = argv.web_port || argv.w || 4443;
+  var tcpport = argv.tcp_port || argv.t || 4444;
+  // init web and socket servers
+  if(!argv.tcp_only) {
+    new RESTServer(opener, webport, config.ACCESS_TOKEN, certLocation,
+                    keyLocation).start();
+  }
+  if(!argv.rest_only) {
+    new TCPServer(opener, tcpport, config.ACCESS_TOKEN, certLocation,
+                    keyLocation).start();
+  }
 }
 
+
+/*
+  Connects to firebase DB and starts all relevant servers
+*/
 function start() {
   // firebase setup
   firebase.initializeApp({
@@ -95,12 +115,13 @@ function start() {
     }
   });
 
-  // Since we use the UID as the email address, we start with anonymous sign-in
+  // since we use the UID as the email address, we start with anonymous sign-in
   if (!config.UID) {
     firebase.auth().signInAnonymously().catch((err) => {
       console.error('Error ' + err.code + ' signing in: ' + err.message);
     });
   } else {
+    // if UID exists, just sign in
     var email = config.UID + DOMAIN;
     var password = config.ACCESS_TOKEN;
     firebase.auth().signInWithEmailAndPassword(email, password).catch((err) => {
@@ -110,4 +131,6 @@ function start() {
   }
 }
 
+
+// run the server on execution
 start();
