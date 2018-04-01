@@ -68,11 +68,11 @@ module.exports = class TCPServer {
 
       // only run over SSL if both cert and key exist
       if(this.cert && this.key) {
-        console.log('starting encrypted TCP server');
+        console.log('Using encrypted TCP server');
         this.credentials = {key: this.key, cert: this.cert};
         this.server = tls.createServer(this.credentials, this.listener);
       } else {
-        console.log('starting unencrypted TCP server');
+        console.log('Using unencrypted TCP server');
         this.server = tls.createServer(this.listener);
       }
 
