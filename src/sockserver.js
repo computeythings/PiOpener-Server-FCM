@@ -87,7 +87,7 @@ module.exports = class TCPServer {
           console.warn('Address already in use, retrying...');
           setTimeout(() => {
             server.close();
-            server.listen(this.port || DEFAULT_PORT);
+            start();
           }, 1000);
       }
     });
