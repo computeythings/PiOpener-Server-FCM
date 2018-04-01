@@ -7,6 +7,7 @@ const CLOSED = 'CLOSED';
 const OPENING = 'OPENING';
 const CLOSING = 'CLOSING';
 const NONE = 'NONE';
+const DEBOUNCE_DELAY = 100; // Debounce time in ms
 
 module.exports = class Opener {
   constructor(openPin, closedPin, relayPin) {
@@ -32,16 +33,22 @@ module.exports = class Opener {
     this.lastTriggered = 0; // Debounce variable
     this.openPin.on('interrupt', (level) => {
       var now = Date.now();
-      if (now - this.lastTriggered > 300) {
-        this.openTrigger(level);
+      if (now - this.lastTriggered > DEBOUNCE_DELAY) {
         this.lastTriggered = now;
+        // wait DEBOUNCE_DELAY ms in order to ensure complete connection
+        setTimeout(() => {
+          this.openTrigger(this.openPin.digitalRead());
+        }, DEBOUNCE_DELAY);
       }
     });
     this.closedPin.on('interrupt', (level) => {
       var now = Date.now();
-      if (now - this.lastTriggered > 300) {
-        this.closeTrigger(level);
+      if (now - this.lastTriggered > DEBOUNCE_DELAY) {
         this.lastTriggered = now;
+        // wait DEBOUNCE_DELAY ms in order to ensure complete connection
+        setTimeout(() => {
+          this.closeTrigger(this.closedPin.digitalRead());
+        }, DEBOUNCE_DELAY);
       }
     });
 
