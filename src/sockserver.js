@@ -30,7 +30,7 @@ module.exports = class TCPServer {
               socket.write(refId + '\n');
             } else {
               console.warn('Client sent invalid API Key - closing connection');
-              socket.write('Invalid API Key.');
+              socket.write('Invalid API Key.\n');
               socket.end();
             }
             return;
