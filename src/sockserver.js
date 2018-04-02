@@ -27,7 +27,7 @@ module.exports = class TCPServer {
             if(stringData === apikey) {
               // set verified once apikey is received
               this.verified = true;
-              socket.write(refId);
+              socket.write(refId + '\n');
             } else {
               console.warn('Client sent invalid API Key - closing connection');
               socket.write('Invalid API Key.');
