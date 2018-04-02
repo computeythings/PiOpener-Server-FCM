@@ -75,7 +75,7 @@ function initServers() {
   }
   if(!argv.rest_only) {
     new TCPServer(opener, tcpport, config.ACCESS_TOKEN, certLocation,
-                    keyLocation).start();
+                    keyLocation, config.DOC_REF).start();
   }
 }
 

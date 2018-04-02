@@ -11,7 +11,7 @@ const CLOSE_COMMAND = 'CLOSE_GARAGE';
 const TOGGLE_COMMAND = 'TOGGLE_GARAGE';
 
 module.exports = class TCPServer {
-  constructor(opener, port, apikey, cert, key) {
+  constructor(opener, port, apikey, cert, key, refId) {
       this.port = port;
       this.cert = fs.readFileSync(cert);
       this.key = fs.readFileSync(key);
@@ -27,6 +27,7 @@ module.exports = class TCPServer {
             if(stringData === apikey) {
               // set verified once apikey is received
               this.verified = true;
+              socket.write(refId);
             } else {
               console.warn('Client sent invalid API Key - closing connection');
               socket.write('Invalid API Key.');
