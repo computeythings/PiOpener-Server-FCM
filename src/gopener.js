@@ -178,7 +178,6 @@ module.exports = class Opener {
       if(!this.upstreamServerDoc)
         return;
 
-      console.log('updating with ',this.status());
       this.upstreamServerDoc.update(this.status())
       .catch((err) => {
         console.error('Error updating server: ', err)
