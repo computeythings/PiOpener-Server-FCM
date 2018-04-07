@@ -44,7 +44,7 @@ function addServerTo(opener) {
     console.log('New entry created at', doc.id);
     config.DOC_REF = doc.id;
     updateConfig();
-    opener.setUpstream(fireDB.doc('servers/' + doc.id));
+    addServerTo(opener);
   })
   .catch((err) => {
     // kill application if we cannot create a document to store server info
@@ -98,7 +98,12 @@ function start() {
 
       if(!config.UID) { // if this the first (anonymous) sign-in
         var email = user.uid + DOMAIN; // uid@thisprojectsdomain
-        var password = config.ACCESS_TOKEN; // API Key as password
+        // API Key as password
+        if (!config.ACCESS_TOKEN || config.ACCESS_TOKEN === '') {
+          config.ACCESS_TOKEN = require('./keygen.js').apikey(26);
+          updateConfig();
+        }
+        var password = config.ACCESS_TOKEN
         var credential = firebase.auth.EmailAuthProvider
                                           .credential(email, password);
         // make this anonymous account permanent
@@ -112,6 +117,8 @@ function start() {
         })
       }
       initServers();
+    } else {
+      console.log('Signed out of firebase');
     }
   });
 
