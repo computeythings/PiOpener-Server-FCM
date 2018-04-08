@@ -8,6 +8,7 @@ const firebase = require('firebase');
 require('firebase/firestore');
 
 const DOMAIN = '@gonnelladev-piopener-2e8f0.firebaseapp.com';
+const SERVER_COLLECTION = 'servers';
 const CONFIG = path.resolve(__dirname, 'config.json');
 const config = require(CONFIG);
 
@@ -28,15 +29,16 @@ function updateConfig() {
   Creates/Accesses a firestore document to save state to which clients will
   subscribe to and be notified upon changes.
 */
-function addServerTo(opener) {
+function getServerDoc() {
   var fireDB = firebase.firestore();
   if(config.DOC_REF && config.DOC_REF !== '') {
-    opener.setUpstream(fireDB.doc('servers/' + config.DOC_REF));
-    return;
+    return new Promise((resolve) => {
+      resolve(fireDB.doc(SERVER_COLLECTION + '/' + config.DOC_REF));
+    });
   }
 
   // if a doc ref doesn't exist, create a new one with this user as owner
-  fireDB.collection('servers').add({
+  fireDB.collection(SERVER_COLLECTION).add({
     STATE: 'NONE',
     OWNER: firebase.auth().currentUser.uid
   })
@@ -44,7 +46,7 @@ function addServerTo(opener) {
     console.log('New entry created at', doc.id);
     config.DOC_REF = doc.id;
     updateConfig();
-    addServerTo(opener);
+    return getServerDoc();
   })
   .catch((err) => {
     // kill application if we cannot create a document to store server info
@@ -62,7 +64,9 @@ function initServers() {
   // read pin values from config file
   var opener = new Opener(config.OPEN_SWITCH_PIN, config.CLOSED_SWITCH_PIN,
                             config.RELAY_PIN);
-  addServerTo(opener);
+  getServerDoc().then((docRef) => {
+    opener.setUpstream(docRef);
+  });
   // read cert and key form cli arguments
   var certLocation = argv.cert || argv.c;
   var keyLocation = argv.key || argv.k;
