@@ -28,6 +28,7 @@ module.exports = class TCPServer {
               // set verified once apikey is received
               this.verified = true;
               socket.write(refId + '\n');
+              opener.addListener(socket);
             } else {
               console.warn('Client sent invalid API Key - closing connection');
               socket.write('Invalid API Key.\n');
@@ -60,6 +61,7 @@ module.exports = class TCPServer {
         });
         socket.on('close', (data) => {
           console.log('TCP connection with '+ socket.remoteAddress +' closed');
+          opener.removeListener(socket);
         });
         socket.on('error', (err) => {
           console.error('Error over connection to ' + socket.remoteAddress +

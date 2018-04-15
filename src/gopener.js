@@ -2,6 +2,7 @@
 const GPIO = require('pigpio').Gpio;
 const sleep = require('sleep');
 
+const STATE = 'STATE';
 const OPEN = 'OPEN';
 const CLOSED = 'CLOSED';
 const OPENING = 'OPENING';
@@ -9,8 +10,10 @@ const CLOSING = 'CLOSING';
 const NONE = 'NONE';
 const DEBOUNCE_DELAY = 100; // Debounce time in ms
 
-module.exports = class Opener {
+module.exports = class Opener extends require('events') {
   constructor(openPin, closedPin, relayPin) {
+    super();
+    this.clients = [];
     // Setup GPIO pins
     this.openPin = new GPIO(openPin,
       {
@@ -164,6 +167,24 @@ module.exports = class Opener {
       return {STATE: this.state};
     }
 
+    this.addListener = function(socket) {
+      this.clients.push(socket);
+    }
+
+    this.removeListener = function(socket) {
+      var position = this.clients.indexOf(socket);
+      if(position > -1) {
+        this.clients.splice(position, 1);
+      }
+    }
+
+    this.updateClients = function() {
+      this.clients.forEach(socket => {
+        console.log('UPDATING SOCKET');
+        socket.write(this.state + '\n');
+      });
+    }
+
     /* Set a Firebase document to be updated on state changes */
     this.setUpstream = function(doc) {
       this.upstreamServerDoc = doc;
@@ -172,12 +193,13 @@ module.exports = class Opener {
 
     /*
       This is run on any state change and will send data to an upstream
-      Firebase server document.
+      Firebase server document and socket clients.
     */
     this.updateServer = function() {
       if(!this.upstreamServerDoc)
         return;
 
+      this.updateClients();
       this.upstreamServerDoc.update(this.status())
       .catch((err) => {
         console.error('Error updating server: ', err)
