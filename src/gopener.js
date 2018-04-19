@@ -169,6 +169,7 @@ module.exports = class Opener extends require('events') {
 
     this.addListener = function(socket) {
       this.clients.push(socket);
+      socket.write(JSON.stringify(this.status()) + '\n');
     }
 
     this.removeListener = function(socket) {
@@ -180,8 +181,9 @@ module.exports = class Opener extends require('events') {
 
     this.updateClients = function() {
       this.clients.forEach(socket => {
-        console.log('UPDATING SOCKET');
-        socket.write(this.state + '\n');
+        console.log('Updating client at ' + socket.remoteAddress +
+                      ' with: ' + JSON.stringify(this.status()));
+        socket.write(JSON.stringify(this.status()) + '\n');
       });
     }
 

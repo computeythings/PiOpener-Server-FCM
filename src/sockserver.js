@@ -26,6 +26,7 @@ module.exports = class TCPServer {
           if(!this.verified) { // verify socket before reading data
             if(stringData === apikey) {
               // set verified once apikey is received
+              console.log('Client verified at address ' + socket.remoteAddress);
               this.verified = true;
               socket.write(refId + '\n');
               opener.addListener(socket);
