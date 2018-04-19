@@ -29,30 +29,29 @@ function updateConfig() {
   Creates/Accesses a firestore document to save state to which clients will
   subscribe to and be notified upon changes.
 */
-function getServerDoc() {
-  var fireDB = firebase.firestore();
-  if(config.DOC_REF && config.DOC_REF !== '') {
-    return new Promise((resolve) => {
+function getServerDoc(fireDB) {
+  return new Promise((resolve, reject) => {
+    if(config.DOC_REF && config.DOC_REF !== '') {
       resolve(fireDB.doc(SERVER_COLLECTION + '/' + config.DOC_REF));
-    });
-  }
-
-  // if a doc ref doesn't exist, create a new one with this user as owner
-  fireDB.collection(SERVER_COLLECTION).add({
-    STATE: 'NONE',
-    OWNER: firebase.auth().currentUser.uid
-  })
-  .then((doc) => {
-    console.log('New entry created at', doc.id);
-    config.DOC_REF = doc.id;
-    updateConfig();
-    return getServerDoc();
-  })
-  .catch((err) => {
-    // kill application if we cannot create a document to store server info
-    console.error('ERROR: Failed to create new server document:\n', err);
-    console.log('Stopping all running servers.');
-    process.exit();
+    } else {
+      // if a doc ref doesn't exist, create a new one with this user as owner
+      fireDB.collection(SERVER_COLLECTION).add({
+        STATE: 'NONE',
+        OWNER: firebase.auth().currentUser.uid
+      })
+      .then((doc) => {
+        console.log('New entry created at', doc.id);
+        config.DOC_REF = doc.id;
+        updateConfig();
+        resolve(getServerDoc(fireDB));
+      })
+      .catch((err) => {
+        // kill application if we cannot create a document to store server info
+        console.error('ERROR: Failed to create new server document:\n', err);
+        reject(Error('Stopping all running servers.'));
+        process.exit();
+      });
+    }
   });
 }
 
@@ -64,23 +63,25 @@ function initServers() {
   // read pin values from config file
   var opener = new Opener(config.OPEN_SWITCH_PIN, config.CLOSED_SWITCH_PIN,
                             config.RELAY_PIN);
-  getServerDoc().then((docRef) => {
+  const firestore = firebase.firestore();
+  getServerDoc(firestore).then(docRef => {
     opener.setUpstream(docRef);
+  }).then(() => {
+    // read cert and key form cli arguments
+    var certLocation = argv.cert || argv.c;
+    var keyLocation = argv.key || argv.k;
+    var webport = argv.web_port || argv.w || 4443;
+    var tcpport = argv.tcp_port || argv.t || 4444;
+    // init web and socket servers
+    if(!argv.tcp_only) {
+      new RESTServer(opener, webport, config.ACCESS_TOKEN, certLocation,
+                      keyLocation).start();
+    }
+    if(!argv.rest_only) {
+      new TCPServer(opener, tcpport, config.ACCESS_TOKEN, certLocation,
+                      keyLocation, config.DOC_REF).start();
+    }
   });
-  // read cert and key form cli arguments
-  var certLocation = argv.cert || argv.c;
-  var keyLocation = argv.key || argv.k;
-  var webport = argv.web_port || argv.w || 4443;
-  var tcpport = argv.tcp_port || argv.t || 4444;
-  // init web and socket servers
-  if(!argv.tcp_only) {
-    new RESTServer(opener, webport, config.ACCESS_TOKEN, certLocation,
-                    keyLocation).start();
-  }
-  if(!argv.rest_only) {
-    new TCPServer(opener, tcpport, config.ACCESS_TOKEN, certLocation,
-                    keyLocation, config.DOC_REF).start();
-  }
 }
 
 
