@@ -9,7 +9,7 @@ require('firebase/firestore');
 
 const DOMAIN = '@gonnelladev-piopener-2e8f0.firebaseapp.com';
 const SERVER_COLLECTION = 'servers';
-const CONFIG = path.resolve(__dirname, 'config.json');
+const CONFIG = path.resolve(__dirname, '../config.json');
 const config = require(CONFIG);
 
 /*
