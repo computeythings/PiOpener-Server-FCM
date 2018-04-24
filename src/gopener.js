@@ -202,10 +202,13 @@ module.exports = class Opener extends require('events') {
         return;
 
       this.updateClients();
-      this.upstreamServerDoc.update(this.status())
-      .catch((err) => {
-        console.error('Error updating server: ', err)
-      });
+      // Probably don't want to save a NONE state to Firestore
+      if(this.state !== NONE) {
+        this.upstreamServerDoc.update(this.status())
+        .catch((err) => {
+          console.error('Error updating server: ', err)
+        });
+      }
     }
   }
 
