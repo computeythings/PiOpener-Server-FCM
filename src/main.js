@@ -2,6 +2,7 @@ const argv = require('minimist')(process.argv.slice(2));
 const TCPServer = require('./sockserver.js');
 const RESTServer = require('./restserver.js');
 const Opener = require('./gopener.js');
+const UDPServer = require('./udp_broadcaster.js');
 const fs = require('fs');
 const path = require('path');
 const firebase = require('firebase');
@@ -82,6 +83,8 @@ function initServers() {
                       keyLocation, config.DOC_REF).start();
     }
   });
+  // open udp socket for network discovery
+  new UDPServer().start();
 }
 
 
