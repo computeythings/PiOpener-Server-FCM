@@ -16,8 +16,10 @@ module.exports = class RESTServer {
       this.opener = opener;
       this.port = port;
       this.apikey = apikey;
-      this.cert = fs.readFileSync(cert);
-      this.key = fs.readFileSync(key);
+      if(cert && key) {
+        this.cert = fs.readFileSync(cert);
+        this.key = fs.readFileSync(key);
+      }
 
       const app = express();
       app.use(bodyParser.urlencoded({

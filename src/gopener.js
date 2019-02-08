@@ -1,6 +1,5 @@
 "use strict"
 const GPIO = require('pigpio').Gpio;
-const sleep = require('sleep');
 
 const STATE = 'STATE';
 const OPEN = 'OPEN';

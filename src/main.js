@@ -115,7 +115,7 @@ function start() {
         var credential = firebase.auth.EmailAuthProvider
                                           .credential(email, password);
         // make this anonymous account permanent
-        user.linkWithCredential(credential).then((linkedUser) => {
+        user.linkAndRetrieveDataWithCredential(credential).then((linkedUser) => {
           console.log('User accounted created');
           config.UID = user.uid;
           updateConfig();

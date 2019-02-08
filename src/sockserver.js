@@ -13,8 +13,10 @@ const TOGGLE_COMMAND = 'TOGGLE_GARAGE';
 module.exports = class TCPServer {
   constructor(opener, port, apikey, cert, key, refId) {
       this.port = port;
-      this.cert = fs.readFileSync(cert);
-      this.key = fs.readFileSync(key);
+      if (cert && key) {
+        this.cert = fs.readFileSync(cert);
+        this.key = fs.readFileSync(key);
+      }
 
       // socket listener for each connection established.
       this.listener = function(socket) {
