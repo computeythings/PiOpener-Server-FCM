@@ -10,7 +10,7 @@ module.exports = class TokenGenerator {
         return jwt.sign({ uid: uid }, this.key, 
         { 
             algorithm: 'RS256', 
-            expiresIn: '15m' 
+            expiresIn: '7d' 
         });
     }
     // throws Invalid Signature if signature is bad
