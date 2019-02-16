@@ -38,9 +38,10 @@ module.exports = class AuthStor {
           if (err)
             reject(err);
           this.db.run(
-            'INSERT INTO auth (password, expiration) ' +
-            'VALUES ($password, $exp)', {
-             $password: hash,
+            'INSERT INTO auth (id, password, expiration) ' +
+            'VALUES ($id, $pass, $exp)', {
+             $id: cred.id,
+             $pass: hash,
              $exp: Date.now() + cred.expiration
           }, function(err) {
             if (err)
@@ -63,13 +64,13 @@ module.exports = class AuthStor {
 
   // compare to row 0 since we'll only have one master password.
   // guests and temporary users will all be token-based.
-  login(cred) {
+  login(password) {
     return new Promise((resolve, reject) => {
-      this.db.each('SELECT * FROM auth WHERE id == \'master\' LIMIT 1',
+      this.db.get('SELECT * FROM auth WHERE id == \'master\' LIMIT 1',
       (err, row) => {
         if (err)
           reject(err);
-        bcrypt.compare(cred.password, row.password, (err, res) =>{
+        bcrypt.compare(password, row.password, (err, res) =>{
           if (err)
             reject(err);
           resolve(res);
@@ -78,12 +79,18 @@ module.exports = class AuthStor {
     });
   }
 
-  isCredentialExpired(cred) {
+  isCredentialExpired(id) {
     return new Promise((resolve, reject) => {
-      this.db.each('SELECT * FROM auth WHERE id == ? LIMIT 1', cred.id,
+      this.db.get('SELECT * FROM auth WHERE id == ? LIMIT 1', id,
       (err, row) => {
         if (err)
           reject(err);
+        if (row === undefined) {
+          var error = new Error();
+          error.name = 'NoSuchIdError';
+          error.message = 'Could not find id ' + id;
+          reject(error);
+        }
         resolve(row.expiration < Date.now());
       });
     });

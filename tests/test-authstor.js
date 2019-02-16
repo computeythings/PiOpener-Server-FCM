@@ -12,10 +12,6 @@ const PRE_EXPIRED_CREDENTIAL = {
   password: 'testPassword',
   expiration: -360000
 };
-const TEST_LOGIN = {
-  id: TEST_CREDENTIAL.id,
-  password: TEST_CREDENTIAL.password
-};
 
 var db;
 before(async () => {
@@ -26,25 +22,26 @@ describe('authstor', () => {
   describe('#addCredential(credential)', () => {
     it('should add credential and return its ID', async () => {
       let result = await db.addCredential(TEST_CREDENTIAL);
-      assert.equal(result, TEST_CREDENTIAL_ID);
+      // new database so the result should always be the first value (1)
+      assert.equal(result, 1);
     });
   });
 
-  describe('#login(credential)', () => {
+  describe('#login(password)', () => {
     it('should return true on login with added credentials', async () => {
-      let result = await db.login(TEST_LOGIN);
+      let result = await db.login(TEST_CREDENTIAL.password);
       assert(result);
     });
   });
 
-  describe('#login(credential)', () => {
+  describe('#isCredentialExpired(id)', () => {
     it('should return false if a credential is not expired', async () => {
-      let result = await db.isCredentialExpired(TEST_LOGIN);
+      let result = await db.isCredentialExpired(TEST_CREDENTIAL.id);
       assert(!result);
     });
     it('should return true if a credential is expired', async () => {
-      let id = await db.addCredential(PRE_EXPIRED_CREDENTIAL);
-      let result = await db.isCredentialExpired({id: id});
+      await db.addCredential(PRE_EXPIRED_CREDENTIAL);
+      let result = await db.isCredentialExpired(PRE_EXPIRED_CREDENTIAL.id);
       assert(result);
     });
   });
