@@ -2,19 +2,20 @@
 const jwt = require('jsonwebtoken');
 
 module.exports = class TokenGenerator {
-    constructor(cert, key) {
-        this.cert = cert;
-        this.key = key;
-    }
-    generate(uid) {
-        return jwt.sign({ uid: uid }, this.key, 
-        { 
-            algorithm: 'RS256', 
-            expiresIn: '7d' 
-        });
-    }
-    // throws Invalid Signature if signature is bad
-    verify(token) {
-        return jwt.verify(token, this.cert);
-    }
+  constructor(certs) {
+    this.cert = certs.cert;
+    this.key = certs.key;
+  }
+
+  generate(id) {
+    return jwt.sign({ id: id }, this.key,
+    {
+      algorithm: 'RS256',
+      expiresIn: '1h'
+    });
+  }
+  // throws Invalid Signature if signature is bad
+  verify(token) {
+    return jwt.verify(token, this.cert);
+  }
 }
