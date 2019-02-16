@@ -1,39 +1,43 @@
 const dgram = require('dgram');
-const udp_socket = dgram.createSocket('udp4');
+const assert = require('assert');
 
 const SERVER_PORT = 41234
 const CLIENT_PORT = 41233
 const SERVER_RESPONSE =  'PI_OPENER_SERVER_ACK';
 const CLIENT_QUERY = 'ANDROID_CLIENT_PI_OPENER';
 
-var assert = {
- equal: function(firstValue, secondValue) {
-   if (firstValue != secondValue) 
-     throw new Error('Assert failed, ' + firstValue + 
-      ' is not equal to ' + secondValue + '.');
-   }
-};
-
 const UDPServer = require('../src/udp_broadcaster.js');
 const server = new UDPServer();
-server.start();
+const test_client_socket = dgram.createSocket('udp4');
 
-// once we receive a client UDP broadcast
-udp_socket.on('message', (msg, rinfo) => {
- try {
-  assert.equal(msg, SERVER_RESPONSE);
-  console.log('Passed.');
- } catch(err) {
-  console.log(err.message);
- }
- udp_socket.close();
- server.stop();
+
+before(() => {
+  // start UDP broadcast server
+  return server.start();
 });
 
-udp_socket.on('listening', () => {
- udp_socket.send(CLIENT_QUERY, 0, CLIENT_QUERY.length, SERVER_PORT, 
-  '127.0.0.1');
+after(()=> {
+  test_client_socket.close();
+  server.stop();
 });
 
-udp_socket.bind(CLIENT_PORT);
-
+describe('udp_broadcaster', () => {
+  describe('#client_response', () => {
+    it('should respond to client queries with a constant response value',
+    (done) => {
+      // first setup the client message listener
+      test_client_socket.on('message', (msg, rinfo) => {
+        // once the server receives the client message,
+        // it's response will be captured here
+        assert.equal(msg, SERVER_RESPONSE);
+        done();
+      });
+      // start listening on the client UDP socket
+      test_client_socket.bind(CLIENT_PORT, () => {
+        // then send the query message to the server
+        test_client_socket.send(CLIENT_QUERY, 0, CLIENT_QUERY.length,
+          SERVER_PORT, '127.0.0.1');
+      });
+    });
+  });
+});
