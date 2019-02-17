@@ -1,7 +1,7 @@
 const argv = require('minimist')(process.argv.slice(2));
 const TCPServer = require('./web/sockserver.js');
 const RESTServer = require('./web/restserver.js');
-const Opener = require('./gopener.js');
+const Opener = require('./opener.js');
 const UDPServer = require('./web/udp_broadcaster.js');
 const fs = require('fs');
 const path = require('path');
@@ -61,12 +61,10 @@ function getServerDoc(fireDB) {
   the Firebase server.
 */
 function initServers() {
-  // read pin values from config file
-  var opener = new Opener(config.OPEN_SWITCH_PIN, config.CLOSED_SWITCH_PIN,
-                            config.RELAY_PIN);
   const firestore = firebase.firestore();
   getServerDoc(firestore).then(docRef => {
-    opener.setUpstream(docRef);
+    var opener = new Opener(config.OPEN_SWITCH_PIN, config.CLOSED_SWITCH_PIN,
+                              config.RELAY_PIN, docRef);
   }).then(() => {
     // read cert and key form cli arguments
     var certLocation = argv.cert || argv.c;
