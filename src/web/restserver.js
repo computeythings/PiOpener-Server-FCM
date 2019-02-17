@@ -46,18 +46,18 @@ module.exports = class RESTServer {
           switch(req.body.intent) {
             case OPEN_INTENT:
               res.writeHead(200, {'Content-Type': 'text/plain'});
-              res.end('Opening garage.');
-              this.opener.openGarage();
+              var status = this.opener.openGarage();
+              res.end(status);
               break;
             case CLOSE_INTENT:
               res.writeHead(200, {'Content-Type': 'text/plain'});
-              res.end('Closing garage.');
-              this.opener.closeGarage();
+              var status = this.opener.closeGarage();
+              res.end(status);
               break;
             case TOGGLE_INTENT:
               res.writeHead(200, {'Content-Type': 'text/plain'});
-              res.end('Toggling garage.');
-              this.opener.toggleGarage();
+              var status = this.opener.toggleGarage();
+              res.end(status);
               break;
             case QUERY_INTENT:
               // Normally the query would be a GET rather than a POST but it
