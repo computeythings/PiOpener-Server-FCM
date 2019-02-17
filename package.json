@@ -4,7 +4,7 @@
   "description": "Raspberry Pi garage door controller",
   "main": "src/main.js",
   "scripts": {
-    "test": "mocha",
+    "test": "node ./node_modules/mocha/bin/mocha tests/*-test.js",
     "start": "sudo node src/main.js"
   },
   "author": "computeythings",
@@ -22,5 +22,8 @@
     "react-native": "^0.58.4",
     "sqlite3": "^4.0.6",
     "tls": "0.0.1"
+  },
+  "devDependencies": {
+    "mocha": "^5.2.0"
   }
 }

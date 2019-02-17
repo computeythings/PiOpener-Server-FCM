@@ -1,5 +1,5 @@
 "use strict"
-const authstor = require('../src/authstor.js');
+const authstor = require('../src/auth/authstor.js');
 const assert = require('assert');
 
 const TEST_CREDENTIAL = {

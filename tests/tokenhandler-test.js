@@ -1,12 +1,12 @@
 "use strict"
 const jwt = require('jsonwebtoken');
-const tokenhandler = require(__dirname + '/../src/tokenhandler.js');
+const tokenhandler = require(__dirname + '/../src/auth/tokenhandler.js');
 const fs = require('fs');
 const assert = require('assert');
 
-const key = fs.readFileSync(__dirname + '/test-assets/test-key.key');
-const fakeKey = fs.readFileSync(__dirname + '/test-assets/fake-test-key.key');
-const cert = fs.readFileSync(__dirname + '/test-assets/test-cert.cert');
+const key = fs.readFileSync(__dirname + '/assets/test-key.key');
+const fakeKey = fs.readFileSync(__dirname + '/assets/fake-test-key.key');
+const cert = fs.readFileSync(__dirname + '/assets/test-cert.cert');
 const certs = {
   cert: cert,
   key: key
