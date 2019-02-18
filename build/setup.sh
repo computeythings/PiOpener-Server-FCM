@@ -47,7 +47,7 @@ if [ "${ARCHITECTURE,,}" == "armv6" ]; then
   npm i --build-from-source grpc
 else
   echo "Installing latest nodejs version"
-  curl -sL https://deb.nodesource.com/setup_9.x | sudo -E bash -
+  curl -sL https://deb.nodesource.com/setup_11.x | sudo -E bash -
   sudo apt-get install -y nodejs
   npm i
 fi

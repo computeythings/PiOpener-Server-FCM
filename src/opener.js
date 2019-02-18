@@ -16,6 +16,45 @@ module.exports = class Opener {
     this.state = NONE; // updated once sensors are setup
     this.lastTriggered = 0; // debounce variable
 
+
+    const setState = (state) => {
+      console.log('Garage is now', state);
+      this.state = state;
+      if (this.want === state)
+        this.want = NONE;
+      updateServer();
+
+      // once state is updated, decide on next action
+      switch(state) {
+        case OPEN:
+          if (this.want === CLOSED) // toggle again if the intent was to close
+            this.closeGarage();
+          break;
+        case CLOSED:
+          if (this.want === OPEN) // toggle again if the intent was to open
+            this.openGarage();
+          break;
+      }
+    }
+
+    /*
+      This is run on any state change and will send data to an upstream
+      Firebase server document and socket clients.
+    */
+    const updateServer = () => {
+      if(!upstream) {
+        console.warn('No upstream server available.');
+        return;
+      }
+      // Probably don't want to save a NONE state to Firestore
+      if(this.state !== NONE) {
+        upstream.update(status())
+        .catch((err) => {
+          console.error('Error updating server: ', err)
+        });
+      }
+    }
+
     // setup GPIO pins
     const relayTrigger = new GPIO(relayPin, {mode: GPIO.OUTPUT});
     relayTrigger.digitalWrite(1); // relay should be on by default
@@ -57,6 +96,7 @@ module.exports = class Opener {
 
     if (!openSensor.digitalRead()) { this.state = OPEN; }
     else if (!closeSensor.digitalRead()) { this.state = CLOSED; }
+    updateServer();
 
     /* Quickly toggle a relay closed and open to simulate a button press */
     this.toggle = function() {
@@ -67,42 +107,6 @@ module.exports = class Opener {
           resolve(true);
         }, 200);
       });
-    }
-
-    setState(state) {
-      console.log('Garage is now', state);
-      this.state = state;
-      if (this.want === state)
-        this.want = NONE;
-      updateServer();
-
-      // once state is updated, decide on next action
-      switch(state) {
-        case OPEN:
-          if (this.want === CLOSED) // toggle again if the intent was to close
-            this.closeGarage();
-          break;
-        case CLOSED:
-          if (this.want === OPEN) // toggle again if the intent was to open
-            this.openGarage();
-          break;
-      }
-    }
-
-    /*
-      This is run on any state change and will send data to an upstream
-      Firebase server document and socket clients.
-    */
-    updateServer() {
-      if(!upstream)
-        return;
-      // Probably don't want to save a NONE state to Firestore
-      if(this.state !== NONE) {
-        upstream.update(status())
-        .catch((err) => {
-          console.error('Error updating server: ', err)
-        });
-      }
     }
   }
 
