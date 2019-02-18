@@ -2,23 +2,26 @@ const argv = require('minimist')(process.argv.slice(2));
 const TCPServer = require('./web/sockserver.js');
 const RESTServer = require('./web/restserver.js');
 const Opener = require('./opener.js');
+const CloudDB = require('./cloud.js');
 const UDPServer = require('./web/udp_broadcaster.js');
 const fs = require('fs');
 const path = require('path');
-const firebase = require('firebase');
-require('firebase/firestore');
 
-const DOMAIN = '@gonnelladev-piopener-2e8f0.firebaseapp.com';
-const SERVER_COLLECTION = 'servers';
 const CONFIG = path.resolve(__dirname, '../config.json');
-const config = require(CONFIG);
+const config = getConfig(CONFIG);
+
+function getConfig(path) {
+  if (!fs.existsSync(path))
+    fs.writeFileSync(path, '{}');
+  return require(path);
+}
 
 /*
   Writes any changes to the config variable to the config file
 */
 function updateConfig() {
-  var newConfig = JSON.stringify(config, null, 4); // args for readable spacing
-  fs.writeFile(CONFIG, newConfig, "utf8", (err) => {
+  var newConfig = JSON.stringify(config, null, 2); // args for readable spacing
+  fs.writeFile(CONFIG, newConfig, 'utf8', (err) => {
     if (err)
       console.error('ERROR: Failed to save doc id to config');
     else
@@ -27,42 +30,11 @@ function updateConfig() {
 }
 
 /*
-  Creates/Accesses a firestore document to save state to which clients will
-  subscribe to and be notified upon changes.
-*/
-function getServerDoc(fireDB) {
-  return new Promise((resolve, reject) => {
-    if(config.DOC_REF && config.DOC_REF !== '') {
-      resolve(fireDB.doc(SERVER_COLLECTION + '/' + config.DOC_REF));
-    } else {
-      // if a doc ref doesn't exist, create a new one with this user as owner
-      fireDB.collection(SERVER_COLLECTION).add({
-        STATE: 'NONE',
-        OWNER: firebase.auth().currentUser.uid
-      })
-      .then((doc) => {
-        console.log('New entry created at', doc.id);
-        config.DOC_REF = doc.id;
-        updateConfig();
-        resolve(getServerDoc(fireDB));
-      })
-      .catch((err) => {
-        // kill application if we cannot create a document to store server info
-        console.error('ERROR: Failed to create new server document:\n', err);
-        reject(Error('Stopping all running servers.'));
-        process.exit();
-      });
-    }
-  });
-}
-
-/*
   Run only after the application has successfully authenticated with
   the Firebase server.
 */
-function initServers() {
-  const firestore = firebase.firestore();
-  getServerDoc(firestore).then(docRef => {
+function initServers(cloud) {
+  cloud.getServerDoc().then(docRef => {
     var opener = new Opener(config.OPEN_SWITCH_PIN, config.CLOSED_SWITCH_PIN,
                               config.RELAY_PIN, docRef);
   }).then(() => {
@@ -85,63 +57,36 @@ function initServers() {
   new UDPServer().start();
 }
 
+function loginObserver(state, data) {
+  //TODO: implement here
+  switch(state) {
+    case 'login-complete':
+      console.log('User logged in', data);
+      break;
+    case 'logout-complete':
+      //TODO: shut down servers?
+      break;
+    default:
+      console.log('Failed login', data);
+  }
+}
 
 /*
   Connects to firebase DB and starts all relevant servers
 */
 function start() {
-  // firebase setup
-  firebase.initializeApp({
-    apiKey: "AIzaSyCdfTfGXd002L2rOSrtdcgl0HhyQLJ3r60",
-    authDomain: "gonnelladev-piopener-2e8f0.firebaseapp.com",
-    projectId: "gonnelladev-piopener-2e8f0",
-    databaseURL: "https://gonnelladev-piopener-2e8f0.firebaseio.com",
-    storageBucket: "gonnelladev-piopener-2e8f0.appspot.com"
-  });
-  firebase.auth().onAuthStateChanged((user) => {
-    if (user) {
-      console.log('Authenticated with UID:', user.uid);
-
-      if(!config.UID) { // if this the first (anonymous) sign-in
-        var email = user.uid + DOMAIN; // uid@thisprojectsdomain
-        // API Key as password
-        if (!config.ACCESS_TOKEN || config.ACCESS_TOKEN === '') {
-          config.ACCESS_TOKEN = require('./keygen.js').apikey(26);
-          updateConfig();
-        }
-        var password = config.ACCESS_TOKEN
-        var credential = firebase.auth.EmailAuthProvider
-                                          .credential(email, password);
-        // make this anonymous account permanent
-        user.linkAndRetrieveDataWithCredential(credential).then((linkedUser) => {
-          console.log('User accounted created');
-          config.UID = user.uid;
-          updateConfig();
-        }).catch((err) => {
-          console.error('Could not link with given credentials\n', err);
-          process.exit();
-        })
-      }
-      initServers();
-    } else {
-      console.log('Signed out of firebase');
-    }
-  });
-
-  // since we use the UID as the email address, we start with anonymous sign-in
-  if (!config.UID) {
-    firebase.auth().signInAnonymously().catch((err) => {
-      console.error('Error ' + err.code + ' signing in: ' + err.message);
-    });
-  } else {
-    // if UID exists, just sign in
-    var email = config.UID + DOMAIN;
-    var password = config.ACCESS_TOKEN;
-    firebase.auth().signInWithEmailAndPassword(email, password).catch((err) => {
-      console.error('Failed to sign in with email and password:', err);
-      process.exit();
+  //TODO:
+  /*
+  if(configured) {
+    var cloud = new CloudDB(loginObserver);
+    cloud.login(config.serverID, Get password somehow? Maybe only use token logins)
+    .then(() => {
+      initServers(cloud); // probably inline this function
     })
   }
+  else
+    init servers for configuration mode
+  */
 }
 
 
