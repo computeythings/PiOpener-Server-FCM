@@ -11,27 +11,29 @@ const FIREBASE_CONFIG = {
     messagingSenderId: "170252164931"
   };
 
-modules.export = class CloudDB {
-  constructor(signInListener) {
+module.exports = class CloudDB {
+  constructor(serverID, signInListener) {
     // firebase setup
     firebase.initializeApp(FIREBASE_CONFIG);
-
-
+    this.serverID = serverID;
+    // uid id set on login
+    this.setUID = uid => {
+      this.uid = uid;
+      this.storage = firebase.firestore().doc(SERVER_COLLECTION + '/' + uid);
+    }
     // this is mainly just here as a fallback in case of errors.
     // state changes should be managed directly at #login()
-    firebase.auth().onAuthStateChanged((user) => {
-      if(!signInListener)
-        return;
-      if (user) {
-        signInListener('login-complete', user);
-      } else {
-        signInListener('logout-complete')
-      }
-    }, (err) => {
-      if(!signInListener)
-        return;
-      signInListener('auth-error', err);
-    });
+    if(signInListener) {
+      firebase.auth().onAuthStateChanged((user) => {
+        if (user) {
+          signInListener('login-complete', user);
+        } else {
+          signInListener('logout-complete')
+        }
+      }, (err) => {
+        signInListener('auth-error', err);
+      });
+    }
   }
 
   /*
@@ -45,8 +47,8 @@ modules.export = class CloudDB {
     <auth/weak-password>
     Thrown if the password is not strong enough.
   */
-  createLogin(serverID, password) {
-    let email = serverID + '@' + FIREBASE_CONFIG.authDomain;
+  createLogin(password) {
+    let email = this.serverID + '@' + FIREBASE_CONFIG.authDomain;
     return firebase.auth().createUserWithEmailAndPassword(email, password);
   }
   /*
@@ -62,9 +64,18 @@ modules.export = class CloudDB {
     <auth/wrong-password>
     Thrown if the password is invalid for the given email, or the account corresponding to the email does not have a password set.
   */
-  login(serverID, password) {
-    let email = serverID + '@' + FIREBASE_CONFIG.authDomain;
-    return firebase.auth().signInWithEmailAndPassword(email, password);
+  login(password) {
+    return new Promise((resolve, reject) => {
+      let email = this.serverID + '@' + FIREBASE_CONFIG.authDomain;
+      // once we've logged in, store the uid
+      firebase.auth().signInWithEmailAndPassword(email, password).then(
+        result => {
+        this.setUID(result.user.uid);
+        resolve(true);
+      }).catch(err => {
+        reject(err);
+      });
+    });
   }
 
   /*
@@ -78,36 +89,13 @@ modules.export = class CloudDB {
     return firebase.auth().signInWithCustomToken(token);
   }
 
+  logout() {
+    return firebase.auth().signOut();
+  }
 
-
-  /*
-    Creates/Accesses a firestore document to save state to which clients will
-    subscribe to and be notified upon changes.
-  */
-  getServerDoc() {
-    var database = firebase.firestore();
-    return new Promise((resolve, reject) => {
-      /* TODO: edit to check for doc at server id and create if it doesn't exist
-      if(config.DOC_REF && config.DOC_REF !== '') {
-        resolve(database.doc(SERVER_COLLECTION + '/' + config.DOC_REF));
-      } else {
-        // if a doc ref doesn't exist, create a new one with this user as owner
-        database.collection(SERVER_COLLECTION).add({
-          STATE: 'NONE',
-          OWNER: firebase.auth().currentUser.uid
-        })
-        .then((doc) => {
-          console.log('New entry created at', doc.id);
-          config.DOC_REF = doc.id;
-          resolve(getServerDoc(database));
-        })
-        .catch((err) => {
-          // kill application if we cannot create a document to store server info
-          console.error('ERROR: Failed to create new server document:\n', err);
-          reject(err);
-        });
-      }
-      */
-    });
+  pushUpdate(data) {
+    if(!this.storage)
+      return Promise.reject(new Error('invalid-login'));
+    return this.storage.update(data);
   }
 }
