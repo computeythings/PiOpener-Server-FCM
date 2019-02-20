@@ -23,7 +23,7 @@ let fakeTokens = new tokenhandler(fakeCerts);
 let token = tokens.generate(testID);
 let fakeToken = fakeTokens.generate(testID);
 
-describe('authstor', () => {
+describe('tokenhandler.js', () => {
   describe('#generate(id)', () => {
     it('should generate a valid token', () => {
       assert(token);

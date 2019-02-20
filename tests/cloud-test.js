@@ -5,14 +5,6 @@ const testID = 'testserver2';
 const testPassword = 'testPassword';
 const cloud = new CloudDB(testID);
 
-before((done) => {
-  cloud.createLogin(testPassword).then((result) => {
-    done();
-  }).catch(err => {
-    done(err);
-  });
-});
-
 // cleanup to a default state
 after(() =>{
   cloud.pushUpdate({STATE: 'NONE'}).then(() => {

@@ -21,7 +21,7 @@ after(()=> {
   server.stop();
 });
 
-describe('udp_broadcaster', () => {
+describe('udp_broadcaster.js', () => {
   describe('#client_response', () => {
     it('should respond to client queries with a constant response value',
     (done) => {

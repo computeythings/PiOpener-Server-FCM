@@ -18,7 +18,7 @@ before(async () => {
   db = await new authstor(':memory:').init();
 });
 
-describe('authstor', () => {
+describe('authstor.js', () => {
   describe('#addCredential(credential)', () => {
     it('should add credential and return its ID', async () => {
       let result = await db.addCredential(TEST_CREDENTIAL);
