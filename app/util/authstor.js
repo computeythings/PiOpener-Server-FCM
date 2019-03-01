@@ -24,25 +24,25 @@ module.exports = class AuthStor {
     });
   }
 
-  addCredential(cred) {
-    if (cred.expiration === undefined)
-        cred.expiration = TOKEN_EXIPIRATION;
-    if (isNaN(cred.expiration)) {
+  addUser(user) {
+    if (user.expiration === undefined)
+        user.expiration = TOKEN_EXIPIRATION;
+    if (isNaN(user.expiration)) {
         return Promise.reject(
           new Error('Bad input given for user expiration')
         );
     }
 
     return new Promise((resolve, reject) => {
-      bcrypt.hash(cred.password, SALT_ROUNDS, (err, hash) => {
+      bcrypt.hash(user.password, SALT_ROUNDS, (err, hash) => {
           if (err)
             reject(err);
           this.db.run(
             'INSERT INTO auth (id, password, expiration) ' +
             'VALUES ($id, $pass, $exp)', {
-             $id: cred.id,
+             $id: user.id,
              $pass: hash,
-             $exp: Date.now() + cred.expiration
+             $exp: Date.now() + user.expiration
           }, function(err) {
             if (err)
               reject(err);
@@ -52,7 +52,7 @@ module.exports = class AuthStor {
     });
   }
 
-  removeCredential(id) {
+  removeUser(id) {
     return new Promise((resolve, reject) => {
         this.db.run('DELETE FROM auth WHERE id == ?', id, function(err) {
         if (err)
@@ -79,7 +79,7 @@ module.exports = class AuthStor {
     });
   }
 
-  isCredentialExpired(id) {
+  isUserExpired(id) {
     return new Promise((resolve, reject) => {
       this.db.get('SELECT * FROM auth WHERE id == ? LIMIT 1', id,
       (err, row) => {

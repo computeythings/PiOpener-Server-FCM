@@ -1,6 +1,6 @@
 "use strict"
 const jwt = require('jsonwebtoken');
-const tokenhandler = require(__dirname + '/../src/auth/tokenhandler.js');
+const tokenhandler = require(__dirname + '/../app/util/tokenhandler.js');
 const fs = require('fs');
 const assert = require('assert');
 

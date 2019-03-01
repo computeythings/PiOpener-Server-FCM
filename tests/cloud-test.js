@@ -1,4 +1,4 @@
-const CloudDB = require('../src/cloud.js');
+const CloudDB = require('../app/controllers/cloud.js');
 const assert = require('assert');
 
 const testID = 'testserver2';

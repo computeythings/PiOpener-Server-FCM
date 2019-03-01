@@ -1,3 +1,11 @@
+/**
+  *
+  * WARNING: THIS FILE IS NOW DEPRECATED AS THE SOCKET SERVER HAS BEEN
+  * MIGRATED TO THE CLIENT FOR A MORE FLEXIBLE CONNECTION SCHEME.
+  *
+  *
+ **/
+
 "use strict"
 const tls = require('tls');
 const fs = require('fs');
