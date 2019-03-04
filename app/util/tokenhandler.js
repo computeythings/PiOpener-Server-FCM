@@ -7,11 +7,19 @@ module.exports = class TokenGenerator {
     this.key = certs.key;
   }
 
-  generate(id) {
+  generateAccessToken(id) {
     return jwt.sign({ id: id }, this.key,
     {
       algorithm: 'RS256',
       expiresIn: '1h'
+    });
+  }
+
+  generateRefreshToken(id) {
+    return jwt.sign({ id: id }, this.key,
+    {
+      algorithm: 'RS256',
+      expiresIn: '30d'
     });
   }
   // throws Invalid Signature if signature is bad
