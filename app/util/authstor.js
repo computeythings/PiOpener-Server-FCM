@@ -16,7 +16,7 @@ module.exports = class AuthStor {
       this.db = new sql.Database(this.dbLocation);
       this.db.run(
         'CREATE TABLE IF NOT EXISTS auth ' +
-        '(id TEXT UNIQUE, password TEXT, expiration INTEGER)', (err) => {
+        '(id TEXT UNIQUE, password TEXT, expiration INTEGER)', err => {
           if (err)
             reject(err);
           resolve(this);
@@ -24,25 +24,47 @@ module.exports = class AuthStor {
     });
   }
 
-  addUser(user) {
-    if (user.expiration === undefined)
-        user.expiration = TOKEN_EXIPIRATION;
-    if (isNaN(user.expiration)) {
+  all() {
+    return new Promise((resolve, reject) => {
+      var all = [];
+      this.db.each('SELECT * FROM auth', (err, row) => {
+        if (err) { reject(err); }
+        all.push(row);
+      }, (err, rows) => {
+        if (err) { reject(err); }
+        resolve(all);
+      });
+    })
+  }
+
+  get(id) {
+    return new Promise((resolve, reject) => {
+      this.db.get('SELECT * FROM auth WHERE id == ?', id, (err, row) => {
+        if(err) { reject(err); }
+        resolve(row);
+      });
+    })
+  }
+
+  add(id) {
+    if (id.expiration === undefined)
+        id.expiration = TOKEN_EXIPIRATION;
+    if (isNaN(id.expiration)) {
         return Promise.reject(
-          new Error('Bad input given for user expiration')
+          new Error('Bad input given for id expiration')
         );
     }
 
     return new Promise((resolve, reject) => {
-      bcrypt.hash(user.password, SALT_ROUNDS, (err, hash) => {
+      bcrypt.hash(id.password, SALT_ROUNDS, (err, hash) => {
           if (err)
             reject(err);
           this.db.run(
             'INSERT INTO auth (id, password, expiration) ' +
             'VALUES ($id, $pass, $exp)', {
-             $id: user.id,
+             $id: id.id,
              $pass: hash,
-             $exp: Date.now() + user.expiration
+             $exp: Date.now() + id.expiration
           }, function(err) {
             if (err)
               reject(err);
@@ -52,7 +74,7 @@ module.exports = class AuthStor {
     });
   }
 
-  removeUser(id) {
+  remove(id) {
     return new Promise((resolve, reject) => {
         this.db.run('DELETE FROM auth WHERE id == ?', id, function(err) {
         if (err)
@@ -63,7 +85,7 @@ module.exports = class AuthStor {
   }
 
   // compare to row 0 since we'll only have one master password.
-  // guests and temporary users will all be token-based.
+  // guests and temporary ids will all be token-based.
   login(password) {
     return new Promise((resolve, reject) => {
       this.db.get('SELECT * FROM auth WHERE id == \'master\' LIMIT 1',
@@ -79,7 +101,7 @@ module.exports = class AuthStor {
     });
   }
 
-  isUserExpired(id) {
+  isExpired(id) {
     return new Promise((resolve, reject) => {
       this.db.get('SELECT * FROM auth WHERE id == ? LIMIT 1', id,
       (err, row) => {

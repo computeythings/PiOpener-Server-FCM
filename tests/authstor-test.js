@@ -12,29 +12,29 @@ before(async () => {
 });
 
 describe('authstor.js', () => {
-  describe('#addUser(user)', () => {
-    it('should add user and return its ID', async () => {
-      let result = await db.addUser(TEST_USER);
+  describe('#add(id)', () => {
+    it('should add id and return its position in database', async () => {
+      let result = await db.add(TEST_USER);
       // new database so the result should always be the first value (1)
       assert.equal(result, 1);
     });
   });
 
   describe('#login(password)', () => {
-    it('should return true on login with added users', async () => {
+    it('should return true on login', async () => {
       let result = await db.login(TEST_USER.password);
       assert(result);
     });
   });
 
-  describe('#isUserExpired(id)', () => {
-    it('should return false if a user is not expired', async () => {
-      let result = await db.isUserExpired(TEST_USER.id);
+  describe('#isExpired(id)', () => {
+    it('should return false if not expired', async () => {
+      let result = await db.isExpired(TEST_USER.id);
       assert(!result);
     });
-    it('should return true if a user is expired', async () => {
-      await db.addUser(PRE_EXPIRED_USER);
-      let result = await db.isUserExpired(PRE_EXPIRED_USER.id);
+    it('should return true if expired', async () => {
+      await db.add(PRE_EXPIRED_USER);
+      let result = await db.isExpired(PRE_EXPIRED_USER.id);
       assert(result);
     });
   });
