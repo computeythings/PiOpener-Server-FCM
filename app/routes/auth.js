@@ -3,44 +3,60 @@ const passport = require('passport');
 const LocalStrategy = require('passport-local').Strategy;
 const passportJWT = require('passport-jwt');
 const JWTStrategy = passportJWT.Strategy;
-const TokenHander = require('../util/tokenhandler.js');
-
+const tokens = require('../util/tokenhandler.js');
 const router = express.Router();
-const tokens = new TokenHander({
-  cert: process.env.SERVER_CERT,
-  key: process.env.SERVER_KEY
-});
 
-// LocalStrategy will only be used to master login
-passport.use(new LocalStrategy(
-  async (password, done) => {
+
+module.exports = function(app, db) {
+  // LocalStrategy will only be used to master login
+  passport.use(new LocalStrategy({
+    password: password
+  }, async (password, done) => {
     try {
-      const success = authstor.login(password);
+      const success = await db.login(password);
       if (success) {
-        return done(null, 'master');
+        return done(null, true);
       } else {
         return done('Incorrect Password');
       }
     } catch (err) {
       done(err);
     }
-  })
-);
-
-passport.use(new JWTStrategy({
+  }));
+  // JWT verification will be passed on to tokenhandler.js
+  passport.use(new JWTStrategy({
     jwtFromRequest: req => req.cookies.jwt,
     secretOrKey: keys.public
   }, (jwtPayload, done) => {
-    tokens.verifyAccessToken(jwtPayload, (err, decoded) => {
-      if (err) { return done(err.message); }
+    try {
+      tokens.verifyAccessToken(jwtPayload);
       return done(null, jwtPayload);
-    });
-  })
-);
+    } catch(err) {
+      return done(err.message);
+    }
+  }));
 
-module.exports = function(app, db) {
   router.post('/login', (req, res) => {
-    const
+    passport.authenticate('local', { session: false }, (err, success) => {
+      if (err || !success) { res.status(400).send({ err }); }
+
+      // assigns payload to user
+      req.login(payload, { session: false }, (err) => {
+        if (err) { res.status(400).send({ err }); }
+
+        const refreshToken = tokens.generateRefreshToken('master');
+        const accessToken = tokens.generateAccessToken(refreshToken);
+        const payload = {
+          refreshToken: refreshToken,
+          accessToken: accessToken
+        };
+
+        // assign access token to cookie
+        res.cookie('jwt', accessToken, { httpOnly: true, secure: true });
+        // send user both access token and refresh token for use
+        res.status(200).send({ payload });
+      });
+    })(req, res);
   });
 
   /*
@@ -48,14 +64,19 @@ module.exports = function(app, db) {
     since new users are always temporary, they will only be granted tokens
     and not rely on actual login authentication.
   */
-  router.post('/register', (req, res) => {
+  router.post('/users/:userId', (req, res) => {
 
   });
 
-  router.post('/api', passport.authenticate('jwt', {session: false}),
+  router.post('/api', passport.authenticate('jwt', { session: false }),
     (req, res) => {
       const token = req;
       res.status(200).send({req});
+  });
+
+  router.get('/api/users', passport.authenticate('jwt', { session: false }),
+    (req, res) => {
+      res.status(200).send({db.all()});
   });
 
   return router;
