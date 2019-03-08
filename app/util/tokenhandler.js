@@ -1,12 +1,13 @@
 "use strict"
 require('dotenv').config();
 const jwt = require('jsonwebtoken');
+const fs = require('fs');
 
 const ACCESS_AUD = 'access';
 const REFRESH_AUD = 'refresh';
 const ISSUER =  process.env.SERVER_NAME || 'PiOpener-Server';
-const CERT = process.env.SERVER_CERT || process.env.SECRET;
-const KEY = process.env.SERVER_KEY || process.env.SECRET;
+const CERT = fs.readFileSync(process.env.SERVER_CERT) || process.env.SECRET;
+const KEY = fs.readFileSync(process.env.SERVER_KEY) || process.env.SECRET;
 // expiration values are in seconds
 const ACCESS_EXP = 60*60 // 1 hour expiration
 const REFRESH_EXP = 60*60*24*30 // 30 day expiration
