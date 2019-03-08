@@ -4,7 +4,7 @@ const bcrypt = require('bcrypt');
 const SALT_ROUNDS = 10;
 // default tokens expire every day
 // 1000 ms/sec * 3600 sec/hr * 24hr/day * 1 day
-const TOKEN_EXIPIRATION = 1000 * 3600 * 24 * 1;
+const DEFAULT_EXPIRATION = 1000 * 3600 * 24 * 1;
 
 module.exports = class AuthStor {
   constructor(dbLocation) {
@@ -46,30 +46,50 @@ module.exports = class AuthStor {
     })
   }
 
-  add(id) {
-    if (id.expiration === undefined)
-        id.expiration = TOKEN_EXIPIRATION;
-    if (isNaN(id.expiration)) {
+  add(user) {
+    if (user.expiration === undefined)
+        user.expiration = DEFAULT_EXPIRATION;
+    if (isNaN(user.expiration)) {
         return Promise.reject(
           new Error('Bad input given for id expiration')
         );
     }
 
     return new Promise((resolve, reject) => {
-      bcrypt.hash(id.password, SALT_ROUNDS, (err, hash) => {
+      bcrypt.hash(user.password, SALT_ROUNDS, (err, hash) => {
           if (err)
             reject(err);
           this.db.run(
             'INSERT INTO auth (id, password, expiration) ' +
             'VALUES ($id, $pass, $exp)', {
-             $id: id.id,
+             $id: user.id,
              $pass: hash,
-             $exp: Date.now() + id.expiration
+             $exp: Date.now() + user.expiration
           }, function(err) {
             if (err)
               reject(err);
             resolve(this.lastID);
           });
+      });
+    });
+  }
+
+  setMasterPassword(current, newPass) {
+    return new Promise((resolve, reject) => {
+      login.then(res => {
+        if (!res) { reject(new Error('Incorrect Password')); }
+
+        bcrypt.hash(user.password, SALT_ROUNDS, (err, hash) => {
+            if (err)
+              reject(err);
+            this.db.run(
+              'REPLACE INTO auth (id, password, expiration) ' +
+              'VALUES (\'master\', ?, -1)', hash, function(err) {
+              if (err)
+                reject(err);
+              resolve(this.lastID);
+            });
+        });
       });
     });
   }
@@ -88,10 +108,18 @@ module.exports = class AuthStor {
   // guests and temporary ids will all be token-based.
   login(password) {
     return new Promise((resolve, reject) => {
-      this.db.get('SELECT * FROM auth WHERE id == \'master\' LIMIT 1',
+      this.db.get('SELECT * FROM auth WHERE id == \'master\'',
       (err, row) => {
-        if (err)
+        // if no master user exists, allow initial login to create it
+        if (!row) {
+          resolve(true);
+          return;
+        }
+        if (err) {
           reject(err);
+          return;
+        }
+
         bcrypt.compare(password, row.password, (err, res) =>{
           if (err)
             reject(err);
@@ -103,7 +131,7 @@ module.exports = class AuthStor {
 
   isExpired(id) {
     return new Promise((resolve, reject) => {
-      this.db.get('SELECT * FROM auth WHERE id == ? LIMIT 1', id,
+      this.db.get('SELECT * FROM auth WHERE id == ?', id,
       (err, row) => {
         if (err)
           reject(err);

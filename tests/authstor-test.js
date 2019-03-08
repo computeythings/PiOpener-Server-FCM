@@ -12,6 +12,20 @@ before(async () => {
 });
 
 describe('authstor.js', () => {
+  describe('#login(password)', () => {
+    it('should allow login when no master entry exists', done => {
+      db.login('').then(res => {
+        if (res) {
+          done();
+        } else {
+          done(new Error('Failed to login to new database'));
+        }
+      }).catch(err => {
+        done(err);
+      });
+    });
+  });
+
   describe('#add(id)', () => {
     it('should add id and return its position in database', async () => {
       let result = await db.add(TEST_USER);
