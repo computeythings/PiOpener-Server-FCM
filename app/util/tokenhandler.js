@@ -2,88 +2,85 @@
 require('dotenv').config();
 const jwt = require('jsonwebtoken');
 
-const ISSUER =  process.env.SERVER_NAME || 'PiOpener-Server';
 const ACCESS_AUD = 'access';
 const REFRESH_AUD = 'refresh';
+const ISSUER =  process.env.SERVER_NAME || 'PiOpener-Server';
+const CERT = process.env.SERVER_CERT || process.env.SECRET;
+const KEY = process.env.SERVER_KEY || process.env.SECRET;
+// expiration values are in seconds
+const ACCESS_EXP = 60*60 // 1 hour expiration
+const REFRESH_EXP = 60*60*24*30 // 30 day expiration
 
-module.exports = class TokenGenerator {
-  constructor(certs) {
-    this.cert = certs.cert;
-    this.key = certs.key;
-    this.secret = certs.secret;
+/*
+  use symmetrical encryption if a secret exists,
+  otherwise assume an asymmetric key pair
+*/
+const ALGORITHM = process.env.SECRET ? 'HS256' : 'RS256';
 
-    if(this.secret) {
-      // secret is equivalent to a symmetrical cert/key
-      this.cert = this.key = this.secret;
-      this.algorithm = 'HS256';
-    }
-    else
-      this.algorithm = 'RS256';
-  }
 
-  verifyRefreshToken(token, callback) {
-    return jwt.verify(token, this.cert, { iss: ISSUER, aud: REFRESH_AUD },
-      callback);
-  }
+exports.verifyRefreshToken = (token, callback, cert=CERT) => {
+  return jwt.verify(token, cert, { iss: ISSUER, aud: REFRESH_AUD },
+    callback);
+}
 
-  // throws Invalid Signature if signature is bad
-  verifyAccessToken(token, callback) {
-    return jwt.verify(token, this.cert, { iss: ISSUER, aud: ACCESS_AUD },
-      callback);
-  }
+// throws Invalid Signature if signature is bad
+exports.verifyAccessToken = (token, callback, cert=CERT) => {
+  return jwt.verify(token, cert, { iss: ISSUER, aud: ACCESS_AUD },
+    callback);
+}
 
-  generateRefreshToken(id, callback) {
-    return jwt.sign(
-      {
-        iss: ISSUER,
-        sub: id,
-        aud: REFRESH_AUD
-      },
-      this.key,
-      {
-          algorithm: this.algorithm,
-          expiresIn: '30d'
-      }, callback
-    );
-  }
+exports.generateRefreshToken = (id, callback, exp=REFRESH_EXP, key=KEY) => {
+  return jwt.sign(
+    {
+      iss: ISSUER,
+      sub: id,
+      aud: REFRESH_AUD
+    },
+    key,
+    {
+        algorithm: ALGORITHM,
+        expiresIn: exp
+    }, callback
+  );
+}
 
-  generateAccessToken(refreshToken, callback) {
-    if(callback) {
-      return new Promise((resolve, reject) => {
-        this.verifyRefreshToken(refreshToken, (err, decoded) => {
-          if(err) { reject(err); }
-          resolve(jwt.sign(
-            {
-              iss: ISSUER,
-              sub: decoded.sub,
-              aud: ACCESS_AUD
-            },
-            this.key,
-            {
-              algorithm: this.algorithm,
-              expiresIn: '1h'
-            }, callback
-          ));
-        });
-      })
-    } else {
-      try {
-        let decoded = this.verifyRefreshToken(refreshToken);
-        return jwt.sign(
+exports.generateAccessToken = (refreshToken, callback, exp=ACCESS_EXP,
+  key=KEY, cert=CERT) => {
+  if(callback) {
+    return new Promise((resolve, reject) => {
+      this.verifyRefreshToken(refreshToken, (err, decoded) => {
+        if(err) { reject(err); }
+        resolve(jwt.sign(
           {
             iss: ISSUER,
             sub: decoded.sub,
-            aud: ACCESS_AUD
+            aud: ACCESS_AUD,
+            exp: exp
           },
-          this.key,
+          key,
           {
-            algorithm: this.algorithm,
-            expiresIn: '1h'
-          }
-        );
-      } catch(err) {
-        throw err;
-      }
+            algorithm: ALGORITHM
+          }, callback
+        ));
+      }, cert);
+    })
+  } else {
+    try {
+      let decoded = this.verifyRefreshToken(refreshToken, null, cert);
+      return jwt.sign(
+        {
+          iss: ISSUER,
+          sub: decoded.sub,
+          aud: ACCESS_AUD
+        },
+        key,
+        {
+          algorithm: ALGORITHM,
+          expiresIn: exp
+        }
+      );
+    } catch(err) {
+      throw err;
     }
   }
 }
