@@ -48,7 +48,8 @@ module.exports = class RESTServer {
             start();
           }, 1000);
       } else
-        console.log('Web server started on port ' + this.server.port);
+        console.log('Web server started on port ' +
+        process.env.SERVER_PORT || 8000);
     });
   }
 }
