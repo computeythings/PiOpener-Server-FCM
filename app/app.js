@@ -10,9 +10,6 @@ const config = ((path) => {
                     fs.writeFileSync(path, '{}');
                   return require(path);
                 })(CONFIG);
-
-
-
 /*
   Writes any changes to the config variable to the config file
 */
@@ -47,18 +44,13 @@ function initServers(cloud) {
   });
 }
 
-function loginObserver(state, data) {
-  //TODO: implement here
-  switch(state) {
-    case 'login-complete':
-      console.log('User logged in', data);
-      break;
-    case 'logout-complete':
-      //TODO: shut down servers?
-      break;
-    default:
-      console.log('Failed login', data);
-  }
+function loginObserver(err, user) {
+  if (err)
+    return console.error(err);
+  if (user)
+    return console.log('User logged in', user);
+  else
+    console.log('Logged out');
 }
 
 /*

@@ -13,7 +13,7 @@ const FIREBASE_CONFIG = {
   };
 
 module.exports = class CloudDB {
-  constructor(serverID, signInListener) {
+  constructor(serverID, callback) {
     // firebase setup
     firebase.initializeApp(FIREBASE_CONFIG);
     this.serverID = serverID;
@@ -24,15 +24,15 @@ module.exports = class CloudDB {
     }
     // this is mainly just here as a fallback in case of errors.
     // state changes should be managed directly at #login()
-    if(signInListener) {
+    if(callback) {
       firebase.auth().onAuthStateChanged((user) => {
         if (user) {
-          signInListener('login-complete', user);
+          callback(null, user);
         } else {
-          signInListener('logout-complete')
+          callback(null, false);
         }
       }, (err) => {
-        signInListener('auth-error', err);
+        callback(err);
       });
     }
   }
