@@ -5,7 +5,7 @@
   "main": "src/main.js",
   "scripts": {
     "test": "set NODE_ENV=TEST&&node ./node_modules/mocha/bin/mocha tests/*-test.js",
-    "test-server": "set NODE_ENV=TEST&&node app/app.js",
+    "test-server": "set NODE_ENV=TEST&&./node_modules/nodemon/bin/nodemon app/app.js",
     "start": "set NODE_ENV=PRODUCTION&&node app/app.js"
   },
   "author": "computeythings",
@@ -28,6 +28,7 @@
     "tls": "0.0.1"
   },
   "devDependencies": {
-    "mocha": "^5.2.0"
+    "mocha": "^5.2.0",
+    "nodemon": "^1.18.10"
   }
 }
