@@ -1,41 +1,34 @@
 "use strict"
 const dgram = require('dgram');
-
-const SERVER_PORT = 41234;
-const CLIENT_PORT = 41233;
+/*
+  UDP server bound to port 41234
+  Android client mirror is bound to port 41233
+*/
 const SERVER_RESPONSE =  'PI_OPENER_SERVER_ACK';
 const CLIENT_QUERY = 'ANDROID_CLIENT_PI_OPENER';
 
-module.exports = class UDPBroadcaster {
-  constructor () {
-    this.udp_socket = dgram.createSocket('udp4');
-    // once we receive a client UDP broadcast
-    this.udp_socket.on('message', (msg, rinfo) => {
-      if (msg == CLIENT_QUERY) {
-        // reply with an acknowledge message
-        // confirming that there is a server at this address
-        this.udp_socket.send(SERVER_RESPONSE, 0, SERVER_RESPONSE.length,
-          CLIENT_PORT, rinfo.address, (err, bytes) => {
-          if (err)
-          console.error(err);
-          console.log('Sent response to android client at: ' + rinfo.address);
-        });
-      }
+const udp_socket = dgram.createSocket('udp4');
+// once we receive a client UDP broadcast
+udp_socket.on('message', (msg, rinfo) => {
+  if (msg == CLIENT_QUERY) {
+    // reply with an acknowledge message
+    // confirming that there is a server at this address
+    udp_socket.send(SERVER_RESPONSE, 0, SERVER_RESPONSE.length,
+      41233, rinfo.address, (err, bytes) => {
+      if (err)
+      console.error(err);
+      console.log('Sent response to android client at: ' + rinfo.address);
     });
   }
-  start () {
-    return new Promise((resolve, reject) => {
-      this.udp_socket.on('error', (err) => {
-        reject(err);
-      });
+});
+udp_socket.on('error', (err) => {
+  console.error(err);
+});
+udp_socket.bind(41234, () => {
+  var address = udp_socket.address();
+  resolve(address)
+});
 
-      this.udp_socket.bind(SERVER_PORT, () => {
-        var address = this.udp_socket.address();
-        resolve(address)
-      });
-    });
-  }
-  stop () {
-    this.udp_socket.close();
-  }
+exports.stop = () => {
+  udp_socket.close();
 }
