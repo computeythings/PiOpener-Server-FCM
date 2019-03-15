@@ -1,20 +1,17 @@
-const argv = require('minimist')(process.argv.slice(2));
-const TCPServer = require('./web/sockserver.js');
-const RESTServer = require('./web/restserver.js');
-const Opener = require('./opener.js');
-const CloudDB = require('./cloud.js');
-const UDPServer = require('./web/udp_broadcaster.js');
+const RESTServer = require('./controllers/restserver.js');
+const Opener = require('./controllers/opener.js');
+const CloudDB = require('./controllers/cloud.js');
 const fs = require('fs');
 const path = require('path');
 
 const CONFIG = path.resolve(__dirname, '../config.json');
-const config = getConfig(CONFIG);
+const config = ((path) => {
+                  if (!fs.existsSync(path))
+                    fs.writeFileSync(path, '{}');
+                  return require(path);
+                })(CONFIG);
 
-function getConfig(path) {
-  if (!fs.existsSync(path))
-    fs.writeFileSync(path, '{}');
-  return require(path);
-}
+
 
 /*
   Writes any changes to the config variable to the config file
@@ -35,26 +32,19 @@ function updateConfig() {
 */
 function initServers(cloud) {
   cloud.getServerDoc().then(docRef => {
-    var opener = new Opener(config.OPEN_SWITCH_PIN, config.CLOSED_SWITCH_PIN,
-                              config.RELAY_PIN, docRef);
+    var opener = new Opener(docRef);
   }).then(() => {
-    // read cert and key form cli arguments
-    var certLocation = argv.cert || argv.c;
-    var keyLocation = argv.key || argv.k;
-    var webport = argv.web_port || argv.w || 4443;
-    var tcpport = argv.tcp_port || argv.t || 4444;
-    // init web and socket servers
-    if(!argv.tcp_only) {
-      new RESTServer(opener, webport, config.ACCESS_TOKEN, certLocation,
-                      keyLocation).start();
-    }
-    if(!argv.rest_only) {
-      new TCPServer(opener, tcpport, config.ACCESS_TOKEN, certLocation,
-                      keyLocation, config.DOC_REF).start();
-    }
+    // start web server
+    new RESTServer(opener).start();
+    // open udp socket for network discovery
+    require('./controllers/udp_broadcaster.js');
+    /* DEPRECATED
+    *
+    new TCPServer(opener, tcpport, config.ACCESS_TOKEN, certLocation,
+                    keyLocation, config.DOC_REF).start();
+    *
+    */
   });
-  // open udp socket for network discovery
-  new UDPServer().start();
 }
 
 function loginObserver(state, data) {
