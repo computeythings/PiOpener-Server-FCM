@@ -1,6 +1,7 @@
 "use strict"
 require('dotenv').config();
 const express = require('express');
+const session = require('express-session');
 const bodyParser = require('body-parser');
 const cookieParser = require('cookie-parser');
 const http = require('http');
@@ -15,12 +16,12 @@ module.exports = class RESTServer {
       const app = express();
       app.use(bodyParser.urlencoded({ extended: true }));
       app.use(bodyParser.json());
-      app.use(require('cookie-parser')());
       app.use(session({
         secret: process.env.SESSION_SECRET,
         resave: false,
         saveUninitialized: true
       }));
+      app.use(require('cookie-parser')());
       app.disable('x-powered-by'); // security restritcion
       app.use(require('../routes/index.js'));
       app.use(require('../routes/auth.js'));
