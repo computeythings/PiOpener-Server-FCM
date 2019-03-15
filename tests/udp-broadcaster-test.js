@@ -1,3 +1,4 @@
+"use strict"
 const dgram = require('dgram');
 const assert = require('assert');
 

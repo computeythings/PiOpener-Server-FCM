@@ -1,3 +1,4 @@
+"use strict"
 require('dotenv').config();
 const firebase = require('firebase');
 require('firebase/firestore');

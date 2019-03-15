@@ -4,7 +4,7 @@ process.env.SERVER_NAME = 'TEST_SERVER_NAME';
 process.env.SECRET = 'S3KRET';
 
 const jwt = require('jsonwebtoken');
-const tokens = require(__dirname + '/../app/util/tokenhandler.js');
+const tokens = require('../app/util/tokenhandler.js');
 const assert = require('assert');
 
 const testID = 'master';
@@ -12,7 +12,7 @@ const fakeSecret = 'FAKE-S3KRET';
 var tokenRef,tokenAcc,fakeTokenRef,fakeTokenAcc,expiredRef,expiredAcc;
 
 describe('tokenhandler.js', () => {
-  
+
   describe('#generateRefreshToken(id)', () => {
 
     it('should generate a valid token given an id', () => {

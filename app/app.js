@@ -1,27 +1,9 @@
+"use strict"
 const RESTServer = require('./controllers/restserver.js');
 const Opener = require('./controllers/opener.js');
 const CloudDB = require('./controllers/cloud.js');
 const fs = require('fs');
 const path = require('path');
-
-const CONFIG = path.resolve(__dirname, '../config.json');
-const config = ((path) => {
-                  if (!fs.existsSync(path))
-                    fs.writeFileSync(path, '{}');
-                  return require(path);
-                })(CONFIG);
-/*
-  Writes any changes to the config variable to the config file
-*/
-function updateConfig() {
-  var newConfig = JSON.stringify(config, null, 2); // args for readable spacing
-  fs.writeFile(CONFIG, newConfig, 'utf8', (err) => {
-    if (err)
-      console.error('ERROR: Failed to save doc id to config');
-    else
-      console.log('Config file updated');
-  });
-}
 
 /*
   Run only after the application has successfully authenticated with

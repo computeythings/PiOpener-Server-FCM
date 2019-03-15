@@ -1,3 +1,4 @@
+"use strict"
 const CloudDB = require('../app/controllers/cloud.js');
 const assert = require('assert');
 
