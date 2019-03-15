@@ -24,10 +24,7 @@ udp_socket.on('message', (msg, rinfo) => {
 udp_socket.on('error', (err) => {
   console.error(err);
 });
-udp_socket.bind(41234, () => {
-  var address = udp_socket.address();
-  resolve(address)
-});
+udp_socket.bind(41234);
 
 exports.stop = () => {
   udp_socket.close();

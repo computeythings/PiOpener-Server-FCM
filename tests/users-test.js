@@ -1,6 +1,6 @@
 "use strict"
-const authstor = require('../app/util/authstor.js');
 const assert = require('assert');
+const authstor = require('../app/controllers/users.js');
 const User = require('../app/models/user.js');
 
 const TEST_USER = new User('master', 'testPassword', 360000);

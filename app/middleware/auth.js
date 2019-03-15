@@ -2,7 +2,7 @@ const fs = require('fs');
 const passport = require('passport');
 const LocalStrategy = require('passport-local').Strategy;
 const CustomStrategy = require('passport-custom');
-const db = require('../controllers/authstor.js');
+const db = require('../controllers/users.js');
 const tokens = require('../util/tokenhandler.js');
 
 

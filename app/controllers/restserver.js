@@ -7,9 +7,6 @@ const http = require('http');
 const https = require('https');
 const fs = require('fs');
 
-// Default listening port
-const DEFAULT_PORT = process.env.NODE_ENV === 'TEST' ? 8000 : 8443;
-
 module.exports = class RESTServer {
   constructor(opener) {
       this.opener = opener;
@@ -41,7 +38,7 @@ module.exports = class RESTServer {
 
   start() {
     // Listen on a specified port or 4443 by default
-    this.server.listen(process.env.SERVER_PORT || DEFAULT_PORT, (err) => {
+    this.server.listen(process.env.SERVER_PORT || 8000, (err) => {
       if (err && err.code === 'EADDRINUSE') {
           console.warn('Address already in use, retrying...');
           setTimeout(() => {

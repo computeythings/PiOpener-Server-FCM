@@ -47,7 +47,7 @@ function initServers(cloud) {
 function loginObserver(err, user) {
   if (err)
     return console.error(err);
-  if (user)
+  else if (user)
     return console.log('User logged in', user);
   else
     console.log('Logged out');

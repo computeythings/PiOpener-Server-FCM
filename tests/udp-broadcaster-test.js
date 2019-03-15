@@ -6,15 +6,8 @@ const CLIENT_PORT = 41233
 const SERVER_RESPONSE =  'PI_OPENER_SERVER_ACK';
 const CLIENT_QUERY = 'ANDROID_CLIENT_PI_OPENER';
 
-const UDPServer = require('../app/controllers/udp_broadcaster.js');
-const server = new UDPServer();
+const server = require('../app/controllers/udp_broadcaster.js');
 const test_client_socket = dgram.createSocket('udp4');
-
-
-before(() => {
-  // start UDP broadcast server
-  return server.start();
-});
 
 after(()=> {
   test_client_socket.close();
