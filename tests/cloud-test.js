@@ -2,9 +2,15 @@
 const CloudDB = require('../app/controllers/cloud.js');
 const assert = require('assert');
 
-const testID = 'testserver2';
-const testPassword = 'testPassword';
-const cloud = new CloudDB(testID);
+const cloud = new CloudDB((err, db) => {
+  if (err)
+    console.error(err);
+  else if (db) {
+    console.log(db.getServerDoc().then(docRef => {
+      console.log(docRef);
+    }));
+  }
+});
 
 // cleanup to a default state
 after(() =>{
@@ -16,7 +22,7 @@ after(() =>{
 describe('cloud.js', () => {
   describe('#login(password)', () => {
     it('should successfully login a test user with a password', (done) => {
-      cloud.login(testPassword).then(result => {
+      cloud.login().then(result => {
         assert(result);
         done();
       });

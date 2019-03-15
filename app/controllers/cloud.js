@@ -14,10 +14,9 @@ const FIREBASE_CONFIG = {
   };
 
 module.exports = class CloudDB {
-  constructor(serverID, callback) {
+  constructor(callback) {
     // firebase setup
     firebase.initializeApp(FIREBASE_CONFIG);
-    this.serverID = serverID;
     // uid id set on login
     this.setUID = uid => {
       this.uid = uid;
@@ -26,7 +25,7 @@ module.exports = class CloudDB {
     // this is mainly just here as a fallback in case of errors.
     // state changes should be managed directly at #login()
     if(callback) {
-      firebase.auth().onAuthStateChanged((user) => {
+      firebase.auth().onAuthStateChanged(user => {
         if (user) {
           callback(null, user);
         } else {
@@ -49,9 +48,10 @@ module.exports = class CloudDB {
     <auth/weak-password>
     Thrown if the password is not strong enough.
   */
-  createLogin(password) {
-    let email = this.serverID + '@' + FIREBASE_CONFIG.authDomain;
-    return firebase.auth().createUserWithEmailAndPassword(email, password);
+  createLogin() {
+    let email = process.env.SERVER_ID + '@' + FIREBASE_CONFIG.authDomain;
+    return firebase.auth().createUserWithEmailAndPassword(email,
+      process.env.SERVER_ACCESS_KEY);
   }
   /*
     Logins are managed by auto-generated server IDs and user's master passwords.
@@ -66,11 +66,12 @@ module.exports = class CloudDB {
     <auth/wrong-password>
     Thrown if the password is invalid for the given email, or the account corresponding to the email does not have a password set.
   */
-  login(password) {
+  login() {
     return new Promise((resolve, reject) => {
-      let email = this.serverID + '@' + FIREBASE_CONFIG.authDomain;
+      let email = process.env.SERVER_ID + '@' + FIREBASE_CONFIG.authDomain;
       // once we've logged in, store the uid
-      firebase.auth().signInWithEmailAndPassword(email, password).then(
+      firebase.auth().signInWithEmailAndPassword(email,
+        process.env.SERVER_ACCESS_KEY).then(
         result => {
         this.setUID(result.user.uid);
         resolve(true);
