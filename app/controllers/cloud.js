@@ -1,14 +1,15 @@
+require('dotenv').config();
 const firebase = require('firebase');
 require('firebase/firestore');
 
-const SERVER_COLLECTION = 'servers';
+const SERVER_COLLECTION = process.env.SERVER_COLLECTION;
 const FIREBASE_CONFIG = {
-    apiKey: "AIzaSyCdfTfGXd002L2rOSrtdcgl0HhyQLJ3r60",
-    authDomain: "gonnelladev-piopener-2e8f0.firebaseapp.com",
-    databaseURL: "https://gonnelladev-piopener-2e8f0.firebaseio.com",
-    projectId: "gonnelladev-piopener-2e8f0",
-    storageBucket: "gonnelladev-piopener-2e8f0.appspot.com",
-    messagingSenderId: "170252164931"
+    apiKey: process.env.apiKey,
+    authDomain: process.env.authDomain,
+    databaseURL: process.env.databaseURL,
+    projectId: process.env.projectId,
+    storageBucket: process.env.storageBucket,
+    messagingSenderId: process.env.messagingSenderId
   };
 
 module.exports = class CloudDB {
