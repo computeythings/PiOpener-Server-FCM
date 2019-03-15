@@ -1,4 +1,5 @@
 "use strict"
+require('dotenv').config();
 const GPIO = require('pigpio').Gpio;
 
 const STATE = 'STATE';
@@ -10,8 +11,12 @@ const NONE = 'NONE';
 const DEBOUNCE_DELAY = 100; // debounce time in ms
 const GARAGE_TIMEOUT = 30000;
 
+const OPEN_PIN = process.env.OPEN_PIN;
+const CLOSED_PIN = process.env.CLOSED_PIN;
+const RELAY_PIN = process.env.RELAY_PIN;
+
 module.exports = class Opener {
-  constructor(openPin, closedPin, relayPin, upstream) {
+  constructor(upstream) {
     this.want = NONE; // changed per user request
     this.state = NONE; // updated once sensors are setup
     this.lastTriggered = 0; // debounce variable
@@ -56,22 +61,18 @@ module.exports = class Opener {
     }
 
     // setup GPIO pins
-    const relayTrigger = new GPIO(relayPin, {mode: GPIO.OUTPUT});
+    const relayTrigger = new GPIO(RELAY_PIN, {mode: GPIO.OUTPUT});
     relayTrigger.digitalWrite(1); // relay should be on by default
-    const openSensor = new GPIO(openPin,
-      {
+    const openSensor = new GPIO(OPEN_PIN, {
         mode: GPIO.INPUT,
         pullUpDown: GPIO.PUD_UP,
         edge: GPIO.EITHER_EDGE
-      }
-    );
-    const closeSensor = new GPIO(closedPin,
-      {
+      });
+    const closeSensor = new GPIO(CLOSED_PIN, {
         mode: GPIO.INPUT,
         pullUpDown: GPIO.PUD_UP,
         edge: GPIO.EITHER_EDGE
-      }
-    );
+      });
 
     openSensor.on('interrupt', (level) => {
       var now = Date.now();
@@ -99,14 +100,13 @@ module.exports = class Opener {
     updateServer();
 
     /* Quickly toggle a relay closed and open to simulate a button press */
-    this.toggle = function() {
-      return new Promise((resolve, reject) => {
-        relayTrigger.digitalWrite(0);
-        setTimeout(() => {
-          relayTrigger.digitalWrite(1);
-          resolve(true);
-        }, 200);
-      });
+    this.toggle = function(callback) {
+      relayTrigger.digitalWrite(0);
+      setTimeout(() => {
+        relayTrigger.digitalWrite(1);
+        this.updateServer();
+        callback(null, status());
+      }, 200);
     }
   }
 
@@ -130,34 +130,28 @@ module.exports = class Opener {
     state was not reached.
   **/
 
-  async toggleGarage() {
+  toggleGarage(callback) {
     if (this.state === OPEN)
-      return this.closeGarage();
+      return this.closeGarage(callback);
     if (this.state === CLOSED)
-      return this.openGarage();
+      return this.openGarage(callback);
 
-    console.log('Status unverifiable: unable to toggle.');
-    return null;
+    callback(new Error('Status unverifiable: unable to toggle.'));
   }
-  async openGarage() {
+  openGarage(callback) {
     console.log('Opening garage');
     if (this.state !== OPEN) {
       this.want = OPEN;
-      await this.toggle();
-      this.updateServer();
-    } else
-      console.log('Garage is already open.');
-    return status();
+      return this.toggle(callback);
+    }
+    return callback(null, status());
   }
-
-  async closeGarage() {
+  closeGarage() {
     console.log('Closing garage');
     if (this.state !== CLOSED) {
       this.want = CLOSED;
-      await this.toggle();
-      this.updateServer();
-    } else
-      console.log('Garage is already closed.');
-    return status();
+      return this.toggle(callback);
+    }
+    return callback(null, status());
   }
 }
