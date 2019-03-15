@@ -6,10 +6,11 @@ const cookieParser = require('cookie-parser');
 const http = require('http');
 const https = require('https');
 const fs = require('fs');
+const Opener = require('./opener.js');
 
 module.exports = class RESTServer {
-  constructor(opener) {
-      this.opener = opener;
+  constructor(upstream) {
+      this.opener = new Opener(upstream);
 
       const app = express();
       app.use(bodyParser.urlencoded({ extended: true }));

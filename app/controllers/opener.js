@@ -53,7 +53,7 @@ module.exports = class Opener {
       }
       // Probably don't want to save a NONE state to Firestore
       if(this.state !== NONE) {
-        upstream.pushData(status())
+        upstream.pushUpdate(status())
         .catch((err) => {
           console.error('Error updating server: ', err.message);
         });
