@@ -3,7 +3,6 @@ require('dotenv').config();
 const firebase = require('firebase');
 require('firebase/firestore');
 
-const SERVER_COLLECTION = process.env.SERVER_COLLECTION;
 const FIREBASE_CONFIG = {
     apiKey: process.env.apiKey,
     authDomain: process.env.authDomain,
@@ -20,7 +19,8 @@ module.exports = class CloudDB {
     // uid id set on login
     this.setUID = uid => {
       this.uid = uid;
-      this.storage = firebase.firestore().doc(SERVER_COLLECTION + '/' + uid);
+      this.storage = firebase.firestore().doc(process.env.SERVER_COLLECTION +
+         '/' + uid);
     }
     // this is mainly just here as a fallback in case of errors.
     // state changes should be managed directly at #login()
