@@ -2,15 +2,7 @@
 const CloudDB = require('../app/controllers/cloud.js');
 const assert = require('assert');
 
-const cloud = new CloudDB((err, db) => {
-  if (err)
-    console.error(err);
-  else if (db) {
-    console.log(db.getServerDoc().then(docRef => {
-      console.log(docRef);
-    }));
-  }
-});
+const cloud = new CloudDB();
 
 // cleanup to a default state
 after(() =>{
