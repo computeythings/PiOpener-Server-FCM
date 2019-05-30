@@ -43,7 +43,7 @@ module.exports = class RESTServer {
 
   broadcast(event, data) {
     if (!this.io)
-      return new Error('Socket.io has not yet been initialized');
+      throw new Error('Socket.io has not yet been initialized');
 
     this.io.emit(event, data);
   }

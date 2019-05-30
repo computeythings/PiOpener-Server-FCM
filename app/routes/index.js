@@ -32,29 +32,30 @@ router.post('*', (req, res, next) => {
       return next();
   })(req, res, next);
 });
-
+// authenticate when accessing any URL
 router.get('*', (req, res, next) => {
-  req.session.returnTo = req.url;
-  passport.authenticate('jwt', (err, result) => {
-    if (err && err.name === 'TokenExpiredError') {
-      passport.authenticate('jwt_refresh', { session: true }, (err, token) => {
-        if (!token)
-          return res.send(401, 'invalid token');
-        else {
-          // a valid jwt has now been issued
-          res.cookie('jwt', token, {
-            httpOnly: true,
-            secure: process.env.NODE_ENV === 'PRODUCTION'
-          });
-          // pass user onto desired location
-          return next();
-        }
-      })(req, res, next);
+  console.log('GET at',req.url,'from',req.connection.remoteAddress);
+  // pass unauthenticated to /login
+  if(req.url === '/login' || req.url === '/logout') {
+    return next();
+  }
+  if(req.url === '/favicon.ico') {
+    res.status(204);
+    return next();
+  }
+
+  passport.authenticate('jwt', (err, result, data) => {
+    if (err || !result) {
+      req.session.returnTo = req.url;
     }
-    if (!result)
-      return res.send(401, 'invalid token');
-    else
-      return next();
+    if(data && data.message && data.message === 'JWT REFRESH') {
+      res.cookie('jwt', result, {
+          httpOnly: true,
+          secure: process.env.NODE_ENV === 'PRODUCTION',
+          overwrite: true
+        });
+    }
+    return next();
   })(req, res, next);
 });
 
