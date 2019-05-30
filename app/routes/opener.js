@@ -25,7 +25,7 @@ router.post('/api/toggle', (req, res) => {
     res.status(200).send(response);
   });
 });
-router.get('/api', (req, res) => {
+router.get('/api/status', (req, res) => {
   res.status(200).send(opener.status());
 });
 

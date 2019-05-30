@@ -8,11 +8,12 @@ const cookieParser = require('cookie-parser');
 const http = require('http');
 const https = require('https');
 const fs = require('fs');
-const Opener = require('./opener.js');
+const path = require('path');
+//const Opener = require('./opener.js');
 
 module.exports = class RESTServer {
   constructor(upstream) {
-      this.opener = new Opener(upstream);
+      //this.opener = new Opener(upstream);
 
       const app = express();
       this.expressSession = session({
@@ -21,13 +22,16 @@ module.exports = class RESTServer {
         saveUninitialized: true
       });
 
+      require('../middleware/auth.js');
       app.use(bodyParser.urlencoded({ extended: true }));
       app.use(bodyParser.json());
-      app.use(expressSession);
+      app.use(this.expressSession);
       app.use(require('cookie-parser')());
       app.disable('x-powered-by'); // security restritcion
+      app.set('views', path.join(__dirname, '../views'));
+      app.use('/', express.static(path.join(__dirname, '/../public')));
       app.use(require('../routes/index.js'));
-      app.use(require('../routes/auth.js'));
+      app.use(require('../routes/users.js'));
       app.use(require('../routes/opener.js'));
 
       // If TLS files were supplied use HTTPS, otherwise use HTTP
@@ -43,7 +47,7 @@ module.exports = class RESTServer {
 
   broadcast(event, data) {
     if (!this.io)
-      throw new Error('Socket.io has not yet been initialized');
+      throw new Error('socket.io has not yet been initialized');
 
     this.io.emit(event, data);
   }
@@ -63,11 +67,14 @@ module.exports = class RESTServer {
     });
 
     // socket.io for client response
-    this.io = require('socket.io')(server);
+    this.io = require('socket.io')(this.server);
     this.io.use(sharedsession(this.expressSession));
 
     this.io.on('connection', socket => {
-      console.log('socket connection at:', socket);
+      //console.log('socket connected:', socket.handshake.session);
+      socket.on('browser-client', () => {
+        socket.emit('browser-data', {message: 'Hello, users!', author: 'World'})
+      });
     });
     this.io.on('disconnect', () => {
       console.log('socket disconnected');

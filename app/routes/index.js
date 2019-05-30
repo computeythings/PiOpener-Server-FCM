@@ -3,7 +3,7 @@ const passport = require('passport');
 const express = require('express');
 const router = express.Router();
 
-// authenticate when accessing any URL
+// pass all POST requests through jwt middleware
 router.post('*', (req, res, next) => {
   // pass unauthenticated to /login
   if(req.url === '/login') {
@@ -32,9 +32,9 @@ router.post('*', (req, res, next) => {
       return next();
   })(req, res, next);
 });
-// authenticate when accessing any URL
+
+// pass all GET requests through jwt middleware
 router.get('*', (req, res, next) => {
-  console.log('GET at',req.url,'from',req.connection.remoteAddress);
   // pass unauthenticated to /login
   if(req.url === '/login' || req.url === '/logout') {
     return next();
@@ -57,6 +57,10 @@ router.get('*', (req, res, next) => {
     }
     return next();
   })(req, res, next);
+});
+
+router.get('/', (req, res) => {
+  res.sendFile('index.html', {root: __dirname + '/../views'});
 });
 
 module. exports = router;
