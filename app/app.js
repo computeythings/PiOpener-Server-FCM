@@ -18,6 +18,7 @@ const path = require('path');
       return console.error(err);
     if (conn) {
         // open udp socket for network discovery
+        // TODO: only open if not adopted
         require('./controllers/udp_broadcaster.js');
         // start web server
         new RESTServer(cloud).start();

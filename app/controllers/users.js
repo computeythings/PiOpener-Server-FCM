@@ -2,9 +2,9 @@
 const sql = require('sqlite3');
 const bcrypt = require('bcrypt');
 const SALT_ROUNDS = 10;
-// default tokens expire every day
-// 1000 ms/sec * 3600 sec/hr * 24hr/day * 1 day
-const DEFAULT_EXPIRATION = 1000 * 3600 * 24 * 1;
+// default tokens expire every hour
+// 1000 ms/sec * 60 sec/min * 60 min/hr
+const DEFAULT_EXPIRATION = 1000*60*60;
 
 module.exports = class AuthStor {
   constructor(dbLocation) {
