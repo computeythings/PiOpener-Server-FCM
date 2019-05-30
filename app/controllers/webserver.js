@@ -9,11 +9,11 @@ const http = require('http');
 const https = require('https');
 const fs = require('fs');
 const path = require('path');
-//const Opener = require('./opener.js');
+const Opener = require('./opener.js');
 
 module.exports = class RESTServer {
   constructor(upstream) {
-      //this.opener = new Opener(upstream);
+      this.opener = new Opener(upstream);
 
       const app = express();
       this.expressSession = session({

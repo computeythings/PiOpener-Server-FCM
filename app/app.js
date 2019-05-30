@@ -1,5 +1,5 @@
 "use strict"
-const RESTServer = require('./controllers/restserver.js');
+const RESTServer = require('./controllers/webserver.js');
 const CloudDB = require('./controllers/cloud.js');
 const fs = require('fs');
 const path = require('path');
