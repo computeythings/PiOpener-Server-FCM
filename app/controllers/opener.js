@@ -1,6 +1,6 @@
 "use strict"
 require('dotenv').config();
-const GPIO = require('pigpio').Gpio;
+const GPIO = null//require('pigpio').Gpio;
 
 const STATE = 'STATE';
 const OPEN = 'OPEN';
