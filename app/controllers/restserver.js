@@ -2,6 +2,7 @@
 require('dotenv').config();
 const express = require('express');
 const session = require('express-session');
+const sharedsession = require("express-socket.io-session");
 const bodyParser = require('body-parser');
 const cookieParser = require('cookie-parser');
 const http = require('http');
@@ -14,13 +15,15 @@ module.exports = class RESTServer {
       this.opener = new Opener(upstream);
 
       const app = express();
-      app.use(bodyParser.urlencoded({ extended: true }));
-      app.use(bodyParser.json());
-      app.use(session({
+      this.expressSession = session({
         secret: process.env.SESSION_SECRET,
         resave: false,
         saveUninitialized: true
-      }));
+      });
+
+      app.use(bodyParser.urlencoded({ extended: true }));
+      app.use(bodyParser.json());
+      app.use(expressSession);
       app.use(require('cookie-parser')());
       app.disable('x-powered-by'); // security restritcion
       app.use(require('../routes/index.js'));
@@ -38,6 +41,13 @@ module.exports = class RESTServer {
       }
   }
 
+  broadcast(event, data) {
+    if (!this.io)
+      return new Error('Socket.io has not yet been initialized');
+
+    this.io.emit(event, data);
+  }
+
   start() {
     // Listen on a specified port or 4443 by default
     this.server.listen(process.env.SERVER_PORT || 8000, (err) => {
@@ -50,6 +60,17 @@ module.exports = class RESTServer {
       } else
         console.log('Web server started on port ' +
         process.env.SERVER_PORT || 8000);
+    });
+
+    // socket.io for client response
+    this.io = require('socket.io')(server);
+    this.io.use(sharedsession(this.expressSession));
+
+    this.io.on('connection', socket => {
+      console.log('socket connection at:', socket);
+    });
+    this.io.on('disconnect', () => {
+      console.log('socket disconnected');
     });
   }
 }
