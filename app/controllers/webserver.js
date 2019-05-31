@@ -2,18 +2,19 @@
 require('dotenv').config();
 const express = require('express');
 const session = require('express-session');
-const sharedsession = require("express-socket.io-session");
+const sharedsession = require('express-socket.io-session');
 const bodyParser = require('body-parser');
-const cookieParser = require('cookie-parser');
 const http = require('http');
 const https = require('https');
 const fs = require('fs');
 const path = require('path');
-const Opener = require('./opener.js');
+//const Opener = require('./opener.js');
+
+const APP_ROOT = path.dirname(require.main.filename);
 
 module.exports = class RESTServer {
   constructor(upstream) {
-      this.opener = new Opener(upstream);
+      //this.opener = new Opener(upstream);
 
       const app = express();
       this.expressSession = session({
@@ -23,16 +24,15 @@ module.exports = class RESTServer {
       });
 
       require('../middleware/auth.js');
+      app.use('/', express.static(path.join(__dirname, '/../../public')));
       app.use(bodyParser.urlencoded({ extended: true }));
       app.use(bodyParser.json());
       app.use(this.expressSession);
       app.use(require('cookie-parser')());
       app.disable('x-powered-by'); // security restritcion
-      app.set('views', path.join(__dirname, '../views'));
-      app.use('/', express.static(path.join(__dirname, '/../public')));
       app.use(require('../routes/index.js'));
       app.use(require('../routes/users.js'));
-      app.use(require('../routes/opener.js'));
+      //app.use(require('../routes/opener.js'));
 
       // If TLS files were supplied use HTTPS, otherwise use HTTP
       if(process.env.NODE_ENV === 'TEST') {

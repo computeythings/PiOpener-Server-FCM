@@ -35,19 +35,21 @@ router.post('*', (req, res, next) => {
 
 // pass all GET requests through jwt middleware
 router.get('*', (req, res, next) => {
-  // pass unauthenticated to /login
-  if(req.url === '/login' || req.url === '/logout') {
-    return next();
-  }
-  if(req.url === '/favicon.ico') {
+  // pass unauthenticated to /login, /logout, and /favicon.ico
+  if(req.url === '/login' || req.url === '/logout' ||
+      req.url === '/favicon.ico') {
+    // the status(204) is required for Chrome when requesting favicon.ico
+    // emitting it will cause double requests which is mostly just annoying
     res.status(204);
     return next();
   }
 
+  // require JWT for any other GET request.
   passport.authenticate('jwt', (err, result, data) => {
     if (err || !result) {
       req.session.returnTo = req.url;
     }
+    // JWT will auto refresh if it's expired
     if(data && data.message && data.message === 'JWT REFRESH') {
       res.cookie('jwt', result, {
           httpOnly: true,
@@ -55,12 +57,14 @@ router.get('*', (req, res, next) => {
           overwrite: true
         });
     }
+    // After success/auto refresh the user is free to proceed
     return next();
   })(req, res, next);
 });
 
+// Test route, please ignore
 router.get('/', (req, res) => {
-  res.sendFile('index.html', {root: __dirname + '/../views'});
+  res.sendFile('html/vue.html', {root: 'public'})
 });
 
 module. exports = router;

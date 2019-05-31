@@ -5,8 +5,8 @@
   "main": "src/main.js",
   "scripts": {
     "test": "set NODE_ENV=TEST&&node ./node_modules/mocha/bin/mocha tests/*-test.js",
-    "test-server": "set NODE_ENV=TEST&&sudo nodemon ./node_modules/nodemon/bin/nodemon app/app.js",
-    "start": "set NODE_ENV=PRODUCTION&&sudo node app/app.js"
+    "test-server": "set NODE_ENV=TEST&&sudo nodemon ./node_modules/nodemon/bin/nodemon app.js",
+    "start": "set NODE_ENV=PRODUCTION&&sudo node app.js"
   },
   "author": "computeythings",
   "license": "ISC",
@@ -24,7 +24,6 @@
     "passport": "^0.4.0",
     "passport-custom": "^1.0.5",
     "passport-local": "^1.0.0",
-    "pigpio": "^1.2.1",
     "socket.io": "^2.2.0",
     "sqlite3": "^4.0.6",
     "tls": "0.0.1"

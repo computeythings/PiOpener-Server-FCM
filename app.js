@@ -1,6 +1,6 @@
 "use strict"
-const RESTServer = require('./controllers/webserver.js');
-const CloudDB = require('./controllers/cloud.js');
+const RESTServer = require('./app/controllers/webserver.js');
+const CloudDB = require('./app/controllers/cloud.js');
 const fs = require('fs');
 const path = require('path');
 /*
@@ -19,7 +19,7 @@ const path = require('path');
     if (conn) {
         // open udp socket for network discovery
         // TODO: only open if not adopted
-        require('./controllers/udp_broadcaster.js');
+        require('./app/controllers/udp_broadcaster.js');
         // start web server
         new RESTServer(cloud).start();
         return;
